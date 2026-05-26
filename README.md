@@ -10,6 +10,16 @@ No rigid 25/5 splits. No task management. No gamification. Just clean, honest fo
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="public/images/cateogies&Slider.png" width="30%" alt="Timer setup" />
+  <img src="public/images/focusAppFocusScreen.png" width="30%" alt="Active timer" />
+  <img src="public/images/categories.png" width="30%" alt="Categories" />
+</p>
+
+---
+
 ## Why FocusSharp?
 
 Most Pomodoro apps force you into fixed intervals and don't meaningfully track _what_ you're working on. FocusSharp is different:
