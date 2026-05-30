@@ -63,6 +63,8 @@ interface AppState {
   // Settings
   isPro: boolean;
   theme: "light" | "dark" | "system";
+  soundEnabled: boolean;
+  setSoundEnabled: (val: boolean) => void;
 
   // Auth (NOT persisted to localStorage)
   user: AuthUser | null;
@@ -144,6 +146,8 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       isPro: false,
       theme: "system",
+      soundEnabled: true,
+      setSoundEnabled: (val) => set({ soundEnabled: val }),
       categories: defaultCategories,
       sessions: [],
       timer: defaultTimer,
@@ -554,6 +558,7 @@ export const useStore = create<AppState>()(
       partialize: (s) => ({
         isPro: s.isPro,
         theme: s.theme,
+        soundEnabled: s.soundEnabled,
         categories: s.categories,
         sessions: s.sessions,
       }),

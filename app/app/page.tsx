@@ -5,6 +5,7 @@ import { useStore } from "@/lib/store";
 import { formatTime } from "@/lib/utils";
 import CircularProgress from "@/components/timer/CircularProgress";
 import Link from "next/link";
+import { playSessionEndSound, playBreakEndSound, stopAllSounds } from "@/lib/sounds";
 
 const QUICK_DURATIONS = [25, 40, 60, 90];
 const BREAK_DURATIONS = [5, 10, 15];
@@ -14,6 +15,8 @@ export default function AppPage() {
     categories,
     timer,
     isPro,
+    soundEnabled,
+    setSoundEnabled,
     setActiveCat,
     setTimerDuration,
     startTimer,
@@ -33,6 +36,7 @@ export default function AppPage() {
     tickBreak,
   } = useStore();
 
+  const prevPhaseRef = useRef(timer.phase);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickTimerRef = useRef(tickTimer);
   const tickBreakRef = useRef(tickBreak);
@@ -40,6 +44,22 @@ export default function AppPage() {
   tickTimerRef.current = tickTimer;
   tickBreakRef.current = tickBreak;
   tickOpenRef.current = tickOpenSession;
+
+  // Play sounds on phase transitions
+  useEffect(() => {
+    const prev = prevPhaseRef.current;
+    prevPhaseRef.current = timer.phase;
+    if (!soundEnabled) return;
+    const wasRunning = prev === "running" || prev === "open-running";
+    const wasBreak = prev === "break" || prev === "open-break";
+    if (wasRunning && (timer.phase === "break" || timer.phase === "open-break")) {
+      playSessionEndSound();
+    } else if (wasBreak && timer.phase === "idle") {
+      playBreakEndSound();
+      setBreakJustEnded(true);
+      setTimeout(() => setBreakJustEnded(false), 10000);
+    }
+  }, [timer.phase, soundEnabled]);
 
   useEffect(() => { setConfirmEnd(false); setConfirmEndOpen(false); }, [timer.phase]);
 
@@ -60,15 +80,26 @@ export default function AppPage() {
 
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [confirmEndOpen, setConfirmEndOpen] = useState(false);
+  const [breakJustEnded, setBreakJustEnded] = useState(false);
 
-  // Auto-dismiss the "won't be counted" warning only while under 1 min — once over 1 min, never show it
-  // For timed sessions: only show confirmEnd if elapsed < 60s
-  // For flow sessions: only show confirmEndOpen if elapsed < 60s
+  // Track whether confirmEnd was triggered before the 1-min mark (the "won't be counted" case)
+  const confirmEndWasEarlyRef = useRef(false);
+
+  // Auto-dismiss only when the early warning crosses 1 min — not the partial session confirmation
+  useEffect(() => {
+    if (confirmEnd && timer.totalSecs - timer.secsLeft >= 60 && confirmEndWasEarlyRef.current) {
+      setConfirmEnd(false);
+      confirmEndWasEarlyRef.current = false;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timer.secsLeft]);
+
   useEffect(() => {
     if (confirmEndOpen && timer.secsElapsed >= 60) {
       setConfirmEndOpen(false);
     }
-  }, [confirmEndOpen, timer.secsElapsed]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timer.secsElapsed]);
 
   const activeCat = categories.find((c) => c.id === timer.activeCatId);
   const isOpenMode = timer.durationMins === 0;
@@ -76,6 +107,24 @@ export default function AppPage() {
   // For open sessions: fill the ring slowly — cap visual at 120 min worth of seconds
   const OPEN_CAP_SECS = 120 * 60;
   const openProgress = Math.min(timer.secsElapsed / OPEN_CAP_SECS, 1);
+
+  const SoundToggle = () => (
+    <button
+      onClick={() => { if (soundEnabled) stopAllSounds(); setSoundEnabled(!soundEnabled); }}
+      className="p-2.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+      title={soundEnabled ? "Mute sounds" : "Unmute sounds"}
+    >
+      {soundEnabled ? (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+          <path d="M10 3.75a.75.75 0 0 0-1.264-.546L4.703 7H3.167a.75.75 0 0 0-.7.48A6.985 6.985 0 0 0 2 10c0 .887.165 1.737.468 2.52.111.29.39.48.7.48h1.535l4.033 3.796A.75.75 0 0 0 10 16.25V3.75ZM15.95 5.05a.75.75 0 0 0-1.06 1.061 5.5 5.5 0 0 1 0 7.778.75.75 0 0 0 1.06 1.06 7 7 0 0 0 0-9.899ZM13.829 7.172a.75.75 0 0 0-1.061 1.06 2.5 2.5 0 0 1 0 3.536.75.75 0 0 0 1.06 1.06 4 4 0 0 0 0-5.656Z" />
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+          <path d="M9.547 3.062A.75.75 0 0 1 10 3.75v12.5a.75.75 0 0 1-1.264.546L4.703 13H3.167a.75.75 0 0 1-.7-.48A6.985 6.985 0 0 1 2 10c0-.887.165-1.737.468-2.52a.75.75 0 0 1 .7-.48h1.535l4.033-3.796a.75.75 0 0 1 .811-.142ZM13.28 7.22a.75.75 0 1 0-1.06 1.06L13.94 10l-1.72 1.72a.75.75 0 0 0 1.06 1.06L15 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L16.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L15 8.94l-1.72-1.72Z" />
+        </svg>
+      )}
+    </button>
+  );
 
   // --- BREAK SCREEN ---
   if (timer.phase === "break" || timer.phase === "open-break") {
@@ -91,6 +140,7 @@ export default function AppPage() {
           exit={{ opacity: 0, y: -12 }}
           className="flex flex-col items-center gap-6 py-4"
         >
+          <div className="self-end"><SoundToggle /></div>
           {/* Session done badge */}
           <div className="card px-6 py-4 text-center w-full">
             <div className="inline-flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-full text-sm font-medium mb-3">
@@ -198,6 +248,19 @@ export default function AppPage() {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col gap-5"
       >
+        <div className="flex justify-end"><SoundToggle /></div>
+        {breakJustEnded && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className="card px-4 py-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-center"
+          >
+            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+              Your break ended! Time to focus again.
+            </p>
+          </motion.div>
+        )}
         {/* Category picker */}
         <div className="card p-4">
           <p className="label-sm mb-3">Category</p>
@@ -317,7 +380,7 @@ export default function AppPage() {
               <span className="text-5xl font-medium tabular-nums tracking-tight text-gray-900 dark:text-white">
                 {formatTime(timer.secsLeft)}
               </span>
-              <span className="text-xs text-gray-400 dark:text-gray-500 mt-1 tabular-nums">
+              <span className="text-sm text-gray-400 dark:text-gray-400 mt-1 tabular-nums">
                 / {timer.durationMins}m
               </span>
               {activeCat && (
@@ -413,10 +476,7 @@ export default function AppPage() {
               <button onClick={pauseTimer} className="btn-secondary flex-1 py-3">
                 Pause
               </button>
-              <button
-                onClick={() => timer.totalSecs - timer.secsLeft < 60 ? setConfirmEnd(true) : endSessionEarly()}
-                className="btn-danger flex-1 py-3"
-              >
+              <button onClick={() => { confirmEndWasEarlyRef.current = timer.totalSecs - timer.secsLeft < 60; setConfirmEnd(true); }} className="btn-danger flex-1 py-3">
                 End Session
               </button>
             </div>
@@ -427,10 +487,7 @@ export default function AppPage() {
               <button onClick={resumeTimer} className="btn-primary flex-1 py-3">
                 Resume
               </button>
-              <button
-                onClick={() => timer.totalSecs - timer.secsLeft < 60 ? setConfirmEnd(true) : endSessionEarly()}
-                className="btn-danger flex-1 py-3"
-              >
+              <button onClick={() => { confirmEndWasEarlyRef.current = timer.totalSecs - timer.secsLeft < 60; setConfirmEnd(true); }} className="btn-danger flex-1 py-3">
                 End Session
               </button>
             </div>
@@ -440,7 +497,9 @@ export default function AppPage() {
             <div className="flex flex-col gap-2">
               <div className="card p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                 <p className="text-sm font-medium text-amber-800 dark:text-amber-300 text-center">
-                  Less than 1 minute logged — this session won&apos;t be counted.
+                  {timer.totalSecs - timer.secsLeft < 60
+                    ? "Less than 1 minute logged — this session won't be counted."
+                    : `${Math.floor((timer.totalSecs - timer.secsLeft) / 60)}m will be recorded as a partial session.`}
                 </p>
               </div>
               <div className="flex gap-2">
