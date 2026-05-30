@@ -29,19 +29,23 @@ export default function AppPage() {
   } = useStore();
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tickTimerRef = useRef(tickTimer);
+  const tickBreakRef = useRef(tickBreak);
+  tickTimerRef.current = tickTimer;
+  tickBreakRef.current = tickBreak;
 
   useEffect(() => {
     if (timer.phase === "running") {
-      intervalRef.current = setInterval(tickTimer, 1000);
+      intervalRef.current = setInterval(() => tickTimerRef.current(), 1000);
     } else if (timer.phase === "break" && timer.breakType === "timed") {
-      intervalRef.current = setInterval(tickBreak, 1000);
+      intervalRef.current = setInterval(() => tickBreakRef.current(), 1000);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [timer.phase, timer.breakType, tickTimer, tickBreak]);
+  }, [timer.phase, timer.breakType]);
 
   const activeCat = categories.find((c) => c.id === timer.activeCatId);
   const progress =

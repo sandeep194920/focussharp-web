@@ -44,7 +44,10 @@ export interface TimerState {
   secsLeft: number;
   totalSecs: number;
   sessionStart: number | null;
+  pausedAt: number | null;
   breakSecsLeft: number;
+  breakDurationSecs: number;
+  breakStart: number | null;
   breakType: "timed" | "open" | null;
 }
 
@@ -91,7 +94,10 @@ const defaultTimer: TimerState = {
   secsLeft: 40 * 60,
   totalSecs: 40 * 60,
   sessionStart: null,
+  pausedAt: null,
   breakSecsLeft: 0,
+  breakDurationSecs: 0,
+  breakStart: null,
   breakType: null,
 };
 
@@ -182,17 +188,28 @@ export const useStore = create<AppState>()(
       },
 
       pauseTimer: () =>
-        set((s) => ({ timer: { ...s.timer, phase: "paused" } })),
+        set((s) => ({ timer: { ...s.timer, phase: "paused", pausedAt: Date.now() } })),
 
       resumeTimer: () =>
-        set((s) => ({ timer: { ...s.timer, phase: "running" } })),
+        set((s) => {
+          const pauseDuration = s.timer.pausedAt ? Date.now() - s.timer.pausedAt : 0;
+          return {
+            timer: {
+              ...s.timer,
+              phase: "running",
+              pausedAt: null,
+              // Shift sessionStart forward by the pause duration so elapsed time stays accurate
+              sessionStart: s.timer.sessionStart ? s.timer.sessionStart + pauseDuration : Date.now(),
+            },
+          };
+        }),
 
       tickTimer: () => {
         const { timer, categories, addSession } = get();
-        if (timer.phase !== "running") return;
-        const newSecs = timer.secsLeft - 1;
+        if (timer.phase !== "running" || !timer.sessionStart) return;
+        const elapsed = Math.floor((Date.now() - timer.sessionStart) / 1000);
+        const newSecs = Math.max(0, timer.totalSecs - elapsed);
         if (newSecs <= 0) {
-          // Session complete
           const cat = categories.find((c) => c.id === timer.activeCatId);
           if (cat && timer.sessionStart) {
             addSession({
@@ -240,7 +257,9 @@ export const useStore = create<AppState>()(
           timer: {
             ...s.timer,
             phase: "break",
+            breakDurationSecs: mins * 60,
             breakSecsLeft: mins * 60,
+            breakStart: Date.now(),
             breakType: type,
           },
         })),
@@ -256,10 +275,13 @@ export const useStore = create<AppState>()(
             ...s.timer,
             phase: "idle",
             breakSecsLeft: 0,
+            breakDurationSecs: 0,
+            breakStart: null,
             breakType: null,
             secsLeft: s.timer.durationMins * 60,
             totalSecs: s.timer.durationMins * 60,
             sessionStart: null,
+            pausedAt: null,
           },
         })),
 
@@ -269,17 +291,21 @@ export const useStore = create<AppState>()(
             ...s.timer,
             phase: "idle",
             breakSecsLeft: 0,
+            breakDurationSecs: 0,
+            breakStart: null,
             breakType: null,
             secsLeft: s.timer.durationMins * 60,
             totalSecs: s.timer.durationMins * 60,
             sessionStart: null,
+            pausedAt: null,
           },
         })),
 
       tickBreak: () => {
         const { timer } = get();
-        if (timer.phase !== "break" || timer.breakType !== "timed") return;
-        const newSecs = timer.breakSecsLeft - 1;
+        if (timer.phase !== "break" || timer.breakType !== "timed" || !timer.breakStart) return;
+        const elapsed = Math.floor((Date.now() - timer.breakStart) / 1000);
+        const newSecs = Math.max(0, timer.breakDurationSecs - elapsed);
         if (newSecs <= 0) {
           get().endBreak();
         } else {
