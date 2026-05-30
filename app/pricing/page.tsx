@@ -22,10 +22,10 @@ const PLANS = [
       { text: "Break flow (timed, open, skip)", included: true },
       { text: "Stats dashboard", included: true },
       { text: "Dark mode", included: true },
+      { text: "Optional account to sync across devices", included: true },
       { text: "Unlimited categories", included: false },
       { text: "Full session history", included: false },
-      { text: "iOS & Mac apps (coming soon)", included: false },
-      { text: "Priority support", included: false },
+      { text: "Native apps (coming soon)", included: false },
     ],
     cta: "Start for free",
     ctaHref: "/app",
@@ -34,50 +34,53 @@ const PLANS = [
   },
   {
     name: "Pro",
-    price: "$3.99",
+    price: "$2.99",
     priceSub: "/month",
-    annualNote: "or $29.99/year — save 37%",
-    trial: "3-day free trial",
-    description: "For power users who want the full picture.",
+    annualNote: "or $19.99/year — save 44%",
+    description: "For anyone who wants the full picture.",
     features: [
       { text: "Everything in Free", included: true },
       { text: "Unlimited categories", included: true },
-      { text: "Full session history", included: true },
-      { text: "iOS & Mac apps (coming soon)", included: true },
+      { text: "Full session history (no expiry)", included: true },
+      { text: "Cloud sync across all your devices", included: true },
+      { text: "Native apps when they launch (iOS, Watch, Mac)", included: true },
       { text: "Priority support", included: true },
-      { text: "Early access to new features", included: true },
     ],
-    cta: "Start 3-day free trial",
+    cta: "Get Pro",
     ctaHref: "#stripe-checkout-monthly", // Stripe placeholder
     highlight: true,
     badge: "Most popular",
   },
   {
     name: "Lifetime",
-    price: "$79",
+    price: "$49",
     priceSub: "one-time",
-    description: "Pay once, own it forever — all future platforms included.",
+    description: "Pay once, own it forever — every platform, every future update.",
     features: [
       { text: "Everything in Pro", included: true },
       { text: "All future platforms (iOS, Watch, Mac)", included: true },
-      { text: "Lifetime updates", included: true },
+      { text: "Lifetime updates at no extra cost", included: true },
       { text: "Priority support forever", included: true },
     ],
     cta: "Get lifetime access",
     ctaHref: "#stripe-checkout-lifetime", // Stripe placeholder
     highlight: false,
-    badge: "🐦 Early Bird — price goes up at 100 users",
+    badge: "🐦 Early Bird — price goes up at 200 users",
   },
 ];
 
 const FAQ = [
   {
-    q: "Is there a free trial on paid plans?",
-    a: "Yes — both the monthly and annual Pro plans include a 3-day free trial. No charge until the trial ends.",
+    q: "Do I need an account to use FocusSharp?",
+    a: "No. You can use the app right now without signing up — your data is saved in your browser's local storage. Just know that if you clear your browser cache or switch devices, that data won't follow you. Create a free account to back it up to the cloud.",
+  },
+  {
+    q: "Can I cancel anytime?",
+    a: "Yes — cancelling stops your subscription from renewing, and you keep Pro access until the end of your current billing period. Monthly plans are billed month-to-month, so there's little to lose trying. Annual plans are billed for the full year upfront and are not refunded if cancelled mid-year, so they're best if you're already sure.",
   },
   {
     q: "What happens to my data if I downgrade?",
-    a: "Your data is never deleted. If you downgrade from Pro to Free, you'll still see your last 7 days of history, and all older sessions are preserved in case you re-upgrade.",
+    a: "Your data is never deleted. If you downgrade from Pro to Free, you'll still see your last 7 days of history, and all older sessions are preserved — they'll come back if you re-upgrade.",
   },
   {
     q: "Does the Lifetime plan include the native apps?",
@@ -86,10 +89,6 @@ const FAQ = [
   {
     q: "What payment methods do you accept?",
     a: "We use Stripe for secure payments. We accept all major credit and debit cards, Apple Pay, and Google Pay.",
-  },
-  {
-    q: "Can I cancel anytime?",
-    a: "Absolutely. Cancel monthly or annual subscriptions anytime from your account settings. No questions asked.",
   },
 ];
 
@@ -149,11 +148,6 @@ export default function PricingPage() {
                         {plan.annualNote}
                       </p>
                     )}
-                    {"trial" in plan && plan.trial && (
-                      <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-                        ✓ {plan.trial}
-                      </p>
-                    )}
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                       {plan.description}
                     </p>
@@ -207,7 +201,7 @@ export default function PricingPage() {
             <div className="mt-6 text-center">
               <div className="inline-flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl text-sm">
                 <span>💡</span>
-                Annual Pro plan: <strong>$29.99/year</strong> — save $17.89 vs monthly
+                Annual Pro plan: <strong>$19.99/year</strong> — save $15.89 vs monthly
               </div>
             </div>
           </div>
@@ -240,9 +234,9 @@ export default function PricingPage() {
           1. Install: npm install stripe @stripe/stripe-js
           2. Add to .env.local: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY
           3. Create products in Stripe Dashboard:
-             - Monthly Pro: $3.99/month (recurring)
-             - Annual Pro: $29.99/year (recurring)
-             - Lifetime: $79 (one-time)
+             - Monthly Pro: $2.99/month (recurring)
+             - Annual Pro: $19.99/year (recurring)
+             - Lifetime: $49 (one-time)
           4. Create /api/checkout/route.ts to create Stripe Checkout sessions
           5. Create /api/webhooks/stripe/route.ts for subscription events
           6. Replace #stripe-checkout-* hrefs with actual checkout flow

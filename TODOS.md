@@ -97,6 +97,11 @@
 
 ## 💡 Wild ideas (low priority / research)
 
+- [ ] **Most active time of day** — show users their peak focus hours in the stats page
+      (e.g. "You focus best between 9–11am"). Requires enough session history to be
+      meaningful; better as a "week 3+" feature once users have built a habit.
+
+
 - [ ] **AI session insights** — weekly "you focus best on Tuesday mornings" insights
       generated from session patterns (privacy-safe, computed client-side).
 - [ ] **Shared focus rooms** — real-time "focus together" rooms where users can see

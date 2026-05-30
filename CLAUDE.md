@@ -54,6 +54,15 @@ lib/
   utils.ts            # Pure helpers — formatTime, aggregateByCategory, aggregateByDay, etc.
 ```
 
+## Timer behaviour (implemented)
+
+- **Timed sessions** — 25/40/60/90 min quick chips + slider (5–120 min). Circular ring counts down.
+- **Flow session** — `durationMins = 0` triggers count-up mode. Ring fills slowly (capped visually at 120 min).
+- **Minimum session length** — sessions under 1 minute are never logged (filtered in `endSessionEarly` and `endOpenSession`).
+- **End Session flow** — under 1 min: shows amber warning ("won't be counted") with Keep going / End anyway. Over 1 min: ends and logs immediately, no confirmation needed.
+- **Category resets after each session** — `activeCatId` is cleared in `endBreak` and `skipBreak` so the user must deliberately pick for the next session.
+- **Stats default** — opens on "Today" view, not 7-day.
+
 ## Key design decisions
 
 - **Dark mode** uses Tailwind's `class` strategy. A blocking `<script>` in the root layout

@@ -1,10 +1,11 @@
 "use client";
 
 interface Props {
-  progress: number; // 0–1, where 1 = full
+  progress: number; // 0–1
   size?: number;
   strokeWidth?: number;
   color?: string;
+  fillUp?: boolean; // true = ring fills from 0 (open session). false = ring depletes (countdown).
   children?: React.ReactNode;
 }
 

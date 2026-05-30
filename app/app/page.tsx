@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStore } from "@/lib/store";
 import { formatTime } from "@/lib/utils";
@@ -21,6 +21,11 @@ export default function AppPage() {
     resumeTimer,
     tickTimer,
     endSessionEarly,
+    startOpenSession,
+    pauseOpenSession,
+    resumeOpenSession,
+    tickOpenSession,
+    endOpenSession,
     startBreak,
     startOpenBreak,
     endBreak,
@@ -31,12 +36,18 @@ export default function AppPage() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickTimerRef = useRef(tickTimer);
   const tickBreakRef = useRef(tickBreak);
+  const tickOpenRef = useRef(tickOpenSession);
   tickTimerRef.current = tickTimer;
   tickBreakRef.current = tickBreak;
+  tickOpenRef.current = tickOpenSession;
+
+  useEffect(() => { setConfirmEnd(false); setConfirmEndOpen(false); }, [timer.phase]);
 
   useEffect(() => {
     if (timer.phase === "running") {
       intervalRef.current = setInterval(() => tickTimerRef.current(), 1000);
+    } else if (timer.phase === "open-running") {
+      intervalRef.current = setInterval(() => tickOpenRef.current(), 1000);
     } else if (timer.phase === "break" && timer.breakType === "timed") {
       intervalRef.current = setInterval(() => tickBreakRef.current(), 1000);
     } else {
@@ -47,9 +58,24 @@ export default function AppPage() {
     };
   }, [timer.phase, timer.breakType]);
 
+  const [confirmEnd, setConfirmEnd] = useState(false);
+  const [confirmEndOpen, setConfirmEndOpen] = useState(false);
+
+  // Auto-dismiss the "won't be counted" warning only while under 1 min — once over 1 min, never show it
+  // For timed sessions: only show confirmEnd if elapsed < 60s
+  // For flow sessions: only show confirmEndOpen if elapsed < 60s
+  useEffect(() => {
+    if (confirmEndOpen && timer.secsElapsed >= 60) {
+      setConfirmEndOpen(false);
+    }
+  }, [confirmEndOpen, timer.secsElapsed]);
+
   const activeCat = categories.find((c) => c.id === timer.activeCatId);
-  const progress =
-    timer.totalSecs > 0 ? 1 - timer.secsLeft / timer.totalSecs : 0;
+  const isOpenMode = timer.durationMins === 0;
+  const progress = timer.totalSecs > 0 ? 1 - timer.secsLeft / timer.totalSecs : 0;
+  // For open sessions: fill the ring slowly — cap visual at 120 min worth of seconds
+  const OPEN_CAP_SECS = 120 * 60;
+  const openProgress = Math.min(timer.secsElapsed / OPEN_CAP_SECS, 1);
 
   // --- BREAK SCREEN ---
   if (timer.phase === "break" || timer.phase === "open-break") {
@@ -230,39 +256,56 @@ export default function AppPage() {
             <div className="flex items-center justify-between mb-3">
               <p className="label-sm">Duration</p>
               <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
-                {timer.durationMins} min
+                {isOpenMode ? "Flow" : `${timer.durationMins} min`}
               </span>
             </div>
-            {/* Quick chips */}
-            <div className="flex gap-2 mb-4">
+            {/* Duration chips */}
+            <div className="flex gap-2 mb-2">
               {QUICK_DURATIONS.map((m) => (
                 <button
                   key={m}
                   onClick={() => setTimerDuration(m)}
-                  className={`chip ${timer.durationMins === m ? "chip-active" : ""}`}
+                  className={`chip flex-1 ${!isOpenMode && timer.durationMins === m ? "chip-active" : ""}`}
                 >
                   {m}m
                 </button>
               ))}
             </div>
-            {/* Slider */}
-            <input
-              type="range"
-              min={5}
-              max={120}
-              step={5}
-              value={timer.durationMins}
-              onChange={(e) => setTimerDuration(Number(e.target.value))}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>5m</span>
-              <span>120m</span>
-            </div>
+            {/* Flow chip — full width */}
+            <button
+              onClick={() => setTimerDuration(0)}
+              className={`chip w-full flex items-center gap-3 px-4 py-3 mb-3 text-left ${isOpenMode ? "chip-active" : ""}`}
+            >
+              <span className="text-base leading-none">∞</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">Flow session</span>
+                <span className={`text-xs font-normal mt-0.5 ${isOpenMode ? "text-indigo-200" : "text-gray-400 dark:text-gray-500"}`}>
+                  Focus until you&apos;re done — no target time
+                </span>
+              </div>
+            </button>
+            {/* Slider — hidden in open mode */}
+            {!isOpenMode && (
+              <>
+                <input
+                  type="range"
+                  min={5}
+                  max={120}
+                  step={5}
+                  value={timer.durationMins}
+                  onChange={(e) => setTimerDuration(Number(e.target.value))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>5m</span>
+                  <span>120m</span>
+                </div>
+              </>
+            )}
           </div>
         )}
 
-        {/* Circular timer */}
+        {/* Circular timer — countdown mode */}
         {(timer.phase === "running" || timer.phase === "paused") && (
           <div className="flex justify-center py-2">
             <CircularProgress
@@ -274,8 +317,11 @@ export default function AppPage() {
               <span className="text-5xl font-medium tabular-nums tracking-tight text-gray-900 dark:text-white">
                 {formatTime(timer.secsLeft)}
               </span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 mt-1 tabular-nums">
+                / {timer.durationMins}m
+              </span>
               {activeCat && (
-                <span className="text-sm text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1.5">
+                <span className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 flex items-center gap-1.5">
                   <span
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: activeCat.color }}
@@ -292,13 +338,60 @@ export default function AppPage() {
           </div>
         )}
 
+        {/* Circular timer — flow session count-up mode */}
+        {(timer.phase === "open-running" || timer.phase === "open-paused") && (
+          <div className="flex justify-center py-2">
+            <CircularProgress
+              progress={openProgress}
+              size={240}
+              strokeWidth={10}
+              color={activeCat?.color ?? "#4f46e5"}
+              fillUp
+            >
+              <span className="text-5xl font-medium tabular-nums tracking-tight text-gray-900 dark:text-white">
+                {formatTime(timer.secsElapsed)}
+              </span>
+              <span className="text-xs font-medium tracking-wide uppercase text-gray-400 dark:text-gray-500 mt-1">
+                Flow
+              </span>
+              {activeCat && (
+                <span className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 flex items-center gap-1.5">
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: activeCat.color }}
+                  />
+                  {activeCat.name}
+                </span>
+              )}
+              {timer.phase === "open-paused" && (
+                <span className="text-xs text-amber-500 font-medium mt-1">
+                  Paused
+                </span>
+              )}
+            </CircularProgress>
+          </div>
+        )}
+
         {/* Idle duration display */}
         {timer.phase === "idle" && (
           <div className="flex justify-center py-4">
-            <CircularProgress progress={0} size={200} strokeWidth={8} color="#4f46e5">
-              <span className="text-4xl font-medium tabular-nums tracking-tight text-gray-400 dark:text-gray-600">
-                {String(timer.durationMins).padStart(2, "0")}:00
-              </span>
+            <CircularProgress
+              progress={0}
+              size={200}
+              strokeWidth={8}
+              color={activeCat ? activeCat.color : "#374151"}
+              fillUp={isOpenMode}
+            >
+              {isOpenMode ? (
+                <div className="flex flex-col items-center gap-1">
+                  <span className={`text-4xl font-light transition-colors duration-300 ${activeCat ? "text-gray-100 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}>∞</span>
+                  <span className={`text-xs font-medium tracking-wide uppercase transition-colors duration-300 ${activeCat ? "text-gray-400 dark:text-gray-400" : "text-gray-400 dark:text-gray-500"}`}>Flow</span>
+                </div>
+              ) : (
+                <span className={`text-4xl font-medium tabular-nums tracking-tight transition-colors duration-300 ${activeCat ? "text-gray-100 dark:text-gray-100" : "text-gray-400 dark:text-gray-600"}`}>
+                  {String(timer.durationMins).padStart(2, "0")}:00
+                </span>
+              )}
             </CircularProgress>
           </div>
         )}
@@ -307,7 +400,7 @@ export default function AppPage() {
         <div className="flex flex-col gap-2">
           {timer.phase === "idle" && (
             <button
-              onClick={startTimer}
+              onClick={isOpenMode ? startOpenSession : startTimer}
               disabled={!timer.activeCatId}
               className="btn-primary w-full py-3.5 text-base font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -315,24 +408,94 @@ export default function AppPage() {
             </button>
           )}
 
-          {timer.phase === "running" && (
+          {timer.phase === "running" && !confirmEnd && (
             <div className="flex gap-2">
               <button onClick={pauseTimer} className="btn-secondary flex-1 py-3">
                 Pause
               </button>
-              <button onClick={endSessionEarly} className="btn-danger flex-1 py-3">
-                End Early
+              <button
+                onClick={() => timer.totalSecs - timer.secsLeft < 60 ? setConfirmEnd(true) : endSessionEarly()}
+                className="btn-danger flex-1 py-3"
+              >
+                End Session
               </button>
             </div>
           )}
 
-          {timer.phase === "paused" && (
+          {timer.phase === "paused" && !confirmEnd && (
             <div className="flex gap-2">
               <button onClick={resumeTimer} className="btn-primary flex-1 py-3">
                 Resume
               </button>
-              <button onClick={endSessionEarly} className="btn-danger flex-1 py-3">
+              <button
+                onClick={() => timer.totalSecs - timer.secsLeft < 60 ? setConfirmEnd(true) : endSessionEarly()}
+                className="btn-danger flex-1 py-3"
+              >
                 End Session
+              </button>
+            </div>
+          )}
+
+          {(timer.phase === "running" || timer.phase === "paused") && confirmEnd && (
+            <div className="flex flex-col gap-2">
+              <div className="card p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300 text-center">
+                  Less than 1 minute logged — this session won&apos;t be counted.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmEnd(false)} className="btn-secondary flex-1 py-3">
+                  Keep going
+                </button>
+                <button onClick={() => { endSessionEarly(); setConfirmEnd(false); }} className="btn-danger flex-1 py-3">
+                  End anyway
+                </button>
+              </div>
+            </div>
+          )}
+
+          {timer.phase === "open-running" && !confirmEndOpen && (
+            <div className="flex gap-2">
+              <button onClick={pauseOpenSession} className="btn-secondary flex-1 py-3">
+                Pause
+              </button>
+              <button
+                onClick={() => timer.secsElapsed < 60 ? setConfirmEndOpen(true) : endOpenSession()}
+                className="btn-primary flex-1 py-3"
+              >
+                Done
+              </button>
+            </div>
+          )}
+
+          {timer.phase === "open-running" && confirmEndOpen && (
+            <div className="flex flex-col gap-2">
+              <div className="card p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300 text-center">
+                  Less than 1 minute logged — this session won&apos;t be counted.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmEndOpen(false)} className="btn-secondary flex-1 py-3">
+                  Keep going
+                </button>
+                <button onClick={() => { endOpenSession(); setConfirmEndOpen(false); }} className="btn-danger flex-1 py-3">
+                  End anyway
+                </button>
+              </div>
+            </div>
+          )}
+
+          {timer.phase === "open-paused" && (
+            <div className="flex gap-2">
+              <button onClick={resumeOpenSession} className="btn-primary flex-1 py-3">
+                Resume
+              </button>
+              <button
+                onClick={() => timer.secsElapsed < 60 ? setConfirmEndOpen(true) : endOpenSession()}
+                className="btn-secondary flex-1 py-3"
+              >
+                Done
               </button>
             </div>
           )}

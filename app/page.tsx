@@ -8,7 +8,7 @@ import EmailCapture from "@/components/ui/EmailCapture";
 export const metadata: Metadata = {
   title: "FocusSharp — Focus Timer, Pomodoro & Deep Work Tracker",
   description:
-    "Free focus timer and time tracking app. Track deep work, study sessions, and flow states by category. No signup required. Pomodoro timer, study timer, flow timer — all in one.",
+    "Free focus timer and time tracking app. Set a target duration or go open — focus until you're done. Track deep work, study sessions, and flow states by category. No signup required.",
   alternates: { canonical: "https://focussharp.app" },
 };
 
@@ -16,7 +16,7 @@ const FEATURES = [
   {
     icon: "⏱",
     title: "Focus Timer",
-    desc: "Set any duration from 5 to 120 minutes. Quick chips for 25, 40, 60, 90 min. Clean circular countdown you can glance at.",
+    desc: "Set a target duration — 25, 40, 60, 90 min — or start a Flow session and focus until you're done. No pressure, no timer ringing at you.",
   },
   {
     icon: "🏷",
@@ -39,9 +39,9 @@ const FEATURES = [
     desc: "Gorgeous light and dark themes that follow your system, or lock to your preference.",
   },
   {
-    icon: "⚡",
-    title: "No Signup Needed",
-    desc: "Open the app and start. Your data lives in your browser. Private by default.",
+    icon: "☁️",
+    title: "Your Data, Your Way",
+    desc: "Use it without an account — data stays in your browser. Sign up free to back it up to the cloud and access it on any device.",
   },
 ];
 
@@ -100,7 +100,7 @@ export default function LandingPage() {
               <div className="text-center md:text-left">
                 <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-full text-sm font-medium mb-6">
                   <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                  Free to use · No signup
+                  Free to use · No signup required
                 </div>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-5">
                   The focus timer
@@ -128,7 +128,7 @@ export default function LandingPage() {
                   </Link>
                 </div>
                 <p className="mt-4 text-xs text-gray-400 dark:text-gray-600">
-                  No account required · Works offline · Data stays in your browser
+                  No account required · Data stays in your browser · Sign up free to sync across devices
                 </p>
               </div>
               {/* Live timer demo */}
@@ -152,6 +152,8 @@ export default function LandingPage() {
                 "Study Timer",
                 "Deep Work Timer",
                 "Flow Timer",
+                "Open Timer",
+                "Stopwatch",
                 "Focus App",
                 "Time Tracker",
                 "Category Time Tracking",
@@ -206,20 +208,20 @@ export default function LandingPage() {
               <div>
                 <div className="label-sm mb-3">Key differentiator</div>
                 <h2 className="text-3xl font-semibold text-gray-900 dark:text-white tracking-tight mb-4">
-                  The break flow that
+                  Built for how you
                   <br />
                   <span className="text-indigo-600 dark:text-indigo-400">
-                    actually fits your day
+                    actually focus
                   </span>
                 </h2>
                 <p className="text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
-                  Most timers force you into rigid Pomodoro cycles. FocusSharp
-                  gives you control. After every session, you choose.
+                  Most timers force you into rigid cycles. FocusSharp gives you
+                  control — before the session and after it.
                 </p>
                 <div className="flex flex-col gap-3">
                   {[
-                    { icon: "⏰", title: "Timed break", desc: "5, 10, or 15 minutes — get notified when it's over." },
-                    { icon: "☕", title: "Open break", desc: "No timer. Come back when you're ready. No guilt." },
+                    { icon: "∞", title: "Flow Session", desc: "Don't know how long you'll focus? Just start. The ring fills as you go. Stop when you're done." },
+                    { icon: "☕", title: "Open break", desc: "No break timer. Come back when you're ready. No guilt." },
                     { icon: "⚡", title: "Skip break", desc: "In the zone? Jump straight into the next session." },
                   ].map((b) => (
                     <div key={b.title} className="flex items-start gap-3">
@@ -237,12 +239,23 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="card p-6 space-y-3">
-                <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full">
-                  ✓ Session complete — Deep Work · 40 min
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  Duration
                 </p>
-                <h3 className="font-semibold text-gray-900 dark:text-white">
-                  Take a break?
-                </h3>
+                <div className="flex gap-2 flex-wrap">
+                  {["25m", "40m", "60m", "90m"].map((t) => (
+                    <div
+                      key={t}
+                      className={`chip text-center ${t === "40m" ? "chip-active" : ""}`}
+                    >
+                      {t}
+                    </div>
+                  ))}
+                  <div className="chip text-center">Open</div>
+                </div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 pt-1">
+                  After session
+                </p>
                 <div className="flex gap-2">
                   {["5m", "10m", "15m"].map((t) => (
                     <div
@@ -283,26 +296,27 @@ export default function LandingPage() {
                 {
                   name: "Free",
                   price: "$0",
-                  features: ["3 categories", "7-day history", "Web app"],
+                  features: ["3 categories", "7-day history", "Web app", "Optional account to sync"],
                   cta: "Get started",
                   href: "/app",
                   highlight: false,
                 },
                 {
                   name: "Pro",
-                  price: "$3.99",
+                  price: "$2.99",
                   sub: "/month",
-                  features: ["Unlimited categories", "Full history", "All platforms"],
-                  cta: "Start free trial",
+                  annual: "or $19.99/year",
+                  features: ["Unlimited categories", "Full history", "Cloud sync", "Native apps (coming soon)"],
+                  cta: "Get Pro",
                   href: "/pricing",
                   highlight: true,
                 },
                 {
                   name: "Lifetime",
-                  price: "$79",
+                  price: "$49",
                   sub: "one-time",
                   badge: "Early Bird",
-                  features: ["Everything in Pro", "All future platforms", "Pay once"],
+                  features: ["Everything in Pro", "All future platforms", "Pay once, own forever"],
                   cta: "Get lifetime access",
                   href: "/pricing",
                   highlight: false,
@@ -329,7 +343,7 @@ export default function LandingPage() {
                   <p className="font-semibold text-gray-900 dark:text-white mb-1">
                     {plan.name}
                   </p>
-                  <div className="flex items-baseline gap-1 mb-4">
+                  <div className="flex items-baseline gap-1 mb-1">
                     <span className="text-3xl font-bold text-gray-900 dark:text-white">
                       {plan.price}
                     </span>
@@ -337,6 +351,11 @@ export default function LandingPage() {
                       <span className="text-sm text-gray-400">{plan.sub}</span>
                     )}
                   </div>
+                  {"annual" in plan && plan.annual && (
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mb-3">
+                      {plan.annual}
+                    </p>
+                  )}
                   <ul className="space-y-1.5 mb-5">
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
@@ -386,21 +405,21 @@ export default function LandingPage() {
         <section className="py-20 px-4 bg-white dark:bg-[#0a0a0e]">
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-full text-sm font-medium mb-6">
-              <span>🍎</span>
-              Coming to Apple platforms
+              <span>📱</span>
+              Native apps coming soon
             </div>
             <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white tracking-tight mb-4">
               FocusSharp. Everywhere you focus.
             </h2>
             <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto mb-10">
-              The native apps are in development. Same minimal design, powered by
-              SwiftUI — built for iPhone, Apple Watch, and Mac.
+              The web app is live now. Native apps are in development —
+              same minimal design, built for the devices you already use.
             </p>
             <div className="grid sm:grid-cols-3 gap-5 max-w-2xl mx-auto mb-10">
               {[
                 { icon: "📱", platform: "iPhone", desc: "Full-featured focus timer with haptics and lock screen widget." },
-                { icon: "⌚", platform: "Apple Watch", desc: "Glanceable timer on your wrist. Start sessions from your watch." },
-                { icon: "💻", platform: "Mac Menu Bar", desc: "Always visible while you work. Native Mac experience." },
+                { icon: "⌚", platform: "Apple Watch", desc: "Glanceable timer on your wrist. Start and stop sessions from your watch." },
+                { icon: "💻", platform: "Mac", desc: "Always visible in your menu bar while you work." },
               ].map((p) => (
                 <div key={p.platform} className="card p-5 text-center">
                   <div className="text-3xl mb-2">{p.icon}</div>
@@ -420,7 +439,7 @@ export default function LandingPage() {
                 Get notified at launch
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Join the waitlist for iOS, watchOS & Mac.
+                Be first to know when the native apps are ready.
               </p>
               <EmailCapture />
             </div>
