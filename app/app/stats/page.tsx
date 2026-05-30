@@ -40,7 +40,7 @@ const BAR_DAYS: Record<Period, number> = {
 // AD_SLOT: replace with AdSense code when approved (stats sidebar, desktop only)
 
 export default function StatsPage() {
-  const { sessions, isPro } = useStore();
+  const { sessions, categories, isPro } = useStore();
   const [period, setPeriod] = useState<Period>("today");
 
   const filtered = filterSessionsByPeriod(sessions, period, isPro);
@@ -52,7 +52,7 @@ export default function StatsPage() {
   const prevTotalMins = prevFiltered.reduce((s, x) => s + x.durationMins, 0);
   const pctChange = percentChange(totalMins, prevTotalMins);
 
-  const byCat = aggregateByCategory(filtered);
+  const byCat = aggregateByCategory(filtered, categories);
   const byDay = aggregateByDay(filtered, BAR_DAYS[period]);
 
   // Group individual sessions by category for the breakdown

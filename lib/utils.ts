@@ -1,4 +1,4 @@
-import { Session, FREE_HISTORY_DAYS } from "./store";
+import { Session, Category, FREE_HISTORY_DAYS } from "./store";
 
 export function formatTime(secs: number): string {
   const m = Math.floor(secs / 60);
@@ -61,26 +61,30 @@ export function filterSessionsByPeriod(
   );
 }
 
-export function aggregateByCategory(sessions: Session[]): {
+export function aggregateByCategory(
+  sessions: Session[],
+  categories: Category[] = []
+): {
   catId: string;
   catName: string;
   catColor: string;
   totalMins: number;
   count: number;
 }[] {
+  const catMap = new Map(categories.map((c) => [c.id, c]));
   const map = new Map<string, { catName: string; catColor: string; totalMins: number; count: number }>();
   for (const s of sessions) {
+    const live = catMap.get(s.catId);
+    const catName = live?.name ?? s.catName;
+    const catColor = live?.color ?? s.catColor;
     const existing = map.get(s.catId);
     if (existing) {
       existing.totalMins += s.durationMins;
       existing.count++;
+      existing.catName = catName;
+      existing.catColor = catColor;
     } else {
-      map.set(s.catId, {
-        catName: s.catName,
-        catColor: s.catColor,
-        totalMins: s.durationMins,
-        count: 1,
-      });
+      map.set(s.catId, { catName, catColor, totalMins: s.durationMins, count: 1 });
     }
   }
   return Array.from(map.entries())
