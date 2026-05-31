@@ -64,6 +64,16 @@ export default function AppPage() {
   useEffect(() => { setConfirmEnd(false); setConfirmEndOpen(false); }, [timer.phase]);
 
   useEffect(() => {
+    const isActive = ["running", "open-running", "paused", "open-paused"].includes(timer.phase);
+    if (!isActive) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [timer.phase]);
+
+  useEffect(() => {
     if (timer.phase === "running") {
       intervalRef.current = setInterval(() => tickTimerRef.current(), 1000);
     } else if (timer.phase === "open-running") {
