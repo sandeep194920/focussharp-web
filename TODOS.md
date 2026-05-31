@@ -9,8 +9,15 @@
 
 - [ ] **Stripe checkout integration** — wire up `/api/checkout` and `/api/webhooks/stripe`
       for Pro monthly, annual, and Lifetime plans. Unlock `isPro` on successful payment.
-- [ ] **Email waitlist backend** — capture emails from the native app waitlist form and
-      blog subscribe form (Resend / Mailchimp / Supabase).
+- [ ] **Email waitlist backend** — configure Resend (or similar SMTP) and wire up email
+      confirmation flow. EmailCapture component already posts to `/api/waitlist` but needs
+      a `source` prop passed from the landing page call sites (e.g. `source="landing-hero"`).
+- [ ] **Sentry error tracking** — add `@sentry/nextjs` before launch. Catches frontend JS
+      errors and API 500s with full stack traces. Free tier is sufficient. Without it, you'll
+      have no visibility into production errors.
+- [ ] **Supabase URL Configuration** — in Supabase dashboard → Authentication → URL
+      Configuration: set Site URL to `https://focussharp.app` and add redirect allowlist
+      entries for both local (`http://localhost:3002/**`) and prod (`https://focussharp.app/**`).
 - [ ] **Notification API** — browser notification when a timed break ends (requires
       permission prompt, should be opt-in).
 - [ ] **Session history list** — a `/app/history` page listing all past sessions with
@@ -50,6 +57,26 @@
       stats page, no-session history, and category list.
 - [ ] **Widget-style home screen shortcut** — a large "Start [last category]" button on
       `/app` that remembers the last used category and duration for one-tap sessions.
+
+---
+
+## 📊 Analytics & Business Metrics
+
+- [ ] **Business metrics dashboard** — use Supabase SQL queries directly for now (no extra
+      tool needed). Key queries: total users, paid users, sessions per day, revenue. Graduate
+      to Metabase or PostHog once post-launch volume justifies it.
+      ```sql
+      -- Quick metrics cheatsheet
+      SELECT COUNT(*) FROM profiles;                          -- total users
+      SELECT COUNT(*) FROM profiles WHERE is_pro = true;     -- paid users
+      SELECT COUNT(*) FROM sessions WHERE completed_at > extract(epoch from now() - interval '7 days') * 1000; -- sessions this week
+      ```
+- [ ] **Frontend event tracking** — add `session_start`, `session_complete`, `break_start`,
+      `category_created`, `upgrade_click` events to Vercel Analytics (already wired in
+      `app/layout.tsx`) or Google Analytics 4.
+- [ ] **Email confirmation + SMTP** — turn "Confirm email" back on in Supabase before
+      public launch. Set up Resend (free up to 3,000 emails/month) as the SMTP provider
+      so confirmation and notification emails deliver reliably.
 
 ---
 
