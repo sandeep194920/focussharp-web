@@ -34,7 +34,14 @@ export default function AuthModal() {
     try {
       if (mode === "sign-up") {
         const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
+        if (error) {
+          if (error.message.toLowerCase().includes("already registered") || error.message.toLowerCase().includes("already exists")) {
+            setError("An account with this email already exists. Try signing in instead.");
+          } else {
+            throw error;
+          }
+          return;
+        }
         if (data.user) {
           setUser({
             id: data.user.id,
@@ -72,12 +79,19 @@ export default function AuthModal() {
 
   const handleGoogle = async () => {
     if (!supabase) return;
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=/app`,
-      },
-    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      // Already signed in with email/password — link Google to the same account
+      await supabase.auth.linkIdentity({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/api/auth/callback?next=/app` },
+      });
+    } else {
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/api/auth/callback?next=/app` },
+      });
+    }
   };
 
   return (
@@ -150,7 +164,18 @@ export default function AuthModal() {
               />
 
               {error && (
-                <p className="text-xs text-red-500 dark:text-red-400">{error}</p>
+                <div>
+                  <p className="text-xs text-red-500 dark:text-red-400">{error}</p>
+                  {error.includes("Try signing in") && (
+                    <button
+                      type="button"
+                      onClick={() => { setError(null); openAuthModal("sign-in"); }}
+                      className="text-xs text-indigo-500 hover:underline mt-1"
+                    >
+                      Go to sign in →
+                    </button>
+                  )}
+                </div>
               )}
               {success && (
                 <p className="text-xs text-emerald-600 dark:text-emerald-400">{success}</p>

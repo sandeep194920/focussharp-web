@@ -18,17 +18,16 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Map snake_case DB columns → camelCase client shape
-  const sessions: Session[] = (data ?? []).map((r) => ({
-    id: r.id,
-    catId: r.cat_id,
-    catName: r.cat_name,
-    catColor: r.cat_color,
-    durationMins: r.duration_mins,
-    startedAt: r.started_at,
-    completedAt: r.completed_at,
-    completed: r.completed,
-    type: r.type,
+  const sessions: Session[] = (data ?? []).map((r: Record<string, unknown>) => ({
+    id: r.id as string,
+    catId: r.cat_id as string,
+    catName: r.cat_name as string,
+    catColor: r.cat_color as string,
+    durationMins: r.duration_mins as number,
+    startedAt: r.started_at as number,
+    completedAt: r.completed_at as number,
+    completed: r.completed as boolean,
+    type: r.type as "focus" | "break",
   }));
 
   return NextResponse.json(sessions);
@@ -44,23 +43,21 @@ export async function POST(request: NextRequest) {
 
   const session: Session = await request.json();
 
-  const { error } = await supabase
-    .from("sessions")
-    .upsert(
-      {
-        id: session.id,
-        user_id: user.id,
-        cat_id: session.catId,
-        cat_name: session.catName,
-        cat_color: session.catColor,
-        duration_mins: session.durationMins,
-        started_at: session.startedAt,
-        completed_at: session.completedAt,
-        completed: session.completed,
-        type: session.type,
-      },
-      { onConflict: "id" }
-    );
+  const { error } = await supabase.from("sessions").upsert(
+    [{
+      id: session.id,
+      user_id: user.id,
+      cat_id: session.catId,
+      cat_name: session.catName,
+      cat_color: session.catColor,
+      duration_mins: session.durationMins,
+      started_at: session.startedAt,
+      completed_at: session.completedAt,
+      completed: session.completed,
+      type: session.type,
+    }],
+    { onConflict: "id" }
+  );
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

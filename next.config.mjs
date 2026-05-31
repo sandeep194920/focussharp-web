@@ -5,7 +5,12 @@ const nextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
-    remotePatterns: [],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+    ],
   },
   // Security headers are in vercel.json; also enforce here for non-Vercel deployments
   async headers() {

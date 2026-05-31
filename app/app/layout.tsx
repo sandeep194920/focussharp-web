@@ -1,10 +1,13 @@
 "use client";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import UserMenu from "@/components/ui/UserMenu";
 import AuthModal from "@/components/ui/AuthModal";
+import { useStore } from "@/lib/store";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 function TimerIcon({ className }: { className?: string }) {
   return (
@@ -44,6 +47,22 @@ const NAV_ITEMS = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { setUser, syncOnLogin } = useStore();
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email ?? "",
+          displayName: session.user.user_metadata?.full_name ?? null,
+          avatarUrl: session.user.user_metadata?.avatar_url ?? null,
+        });
+        syncOnLogin();
+      }
+    });
+  }, [setUser, syncOnLogin]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0e] flex flex-col">
