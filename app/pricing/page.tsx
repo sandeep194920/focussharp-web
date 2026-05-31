@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
+import CheckoutButton from "@/components/ui/CheckoutButton";
 
 export const metadata: Metadata = {
   title: "Pricing — FocusSharp",
@@ -28,7 +28,7 @@ const PLANS = [
       { text: "Native apps (coming soon)", included: false },
     ],
     cta: "Start for free",
-    ctaHref: "/app",
+    plan: "free" as const,
     highlight: false,
     badge: null,
   },
@@ -47,7 +47,7 @@ const PLANS = [
       { text: "Priority support", included: true },
     ],
     cta: "Get Pro",
-    ctaHref: "#stripe-checkout-monthly", // Stripe placeholder
+    plan: "monthly" as const,
     highlight: true,
     badge: "Most popular",
   },
@@ -63,7 +63,7 @@ const PLANS = [
       { text: "Priority support forever", included: true },
     ],
     cta: "Get lifetime access",
-    ctaHref: "#stripe-checkout-lifetime", // Stripe placeholder
+    plan: "lifetime" as const,
     highlight: false,
     badge: "🐦 Early Bird — price goes up at 200 users",
   },
@@ -178,17 +178,16 @@ export default function PricingPage() {
                     ))}
                   </ul>
 
-                  <Link
-                    href={plan.ctaHref}
+                  <CheckoutButton
+                    plan={plan.plan}
                     className={`w-full text-center text-sm py-3 ${
                       plan.highlight ? "btn-primary" : "btn-secondary"
                     }`}
                   >
                     {plan.cta}
-                  </Link>
+                  </CheckoutButton>
 
-                  {/* Stripe integration note */}
-                  {plan.ctaHref.startsWith("#stripe") && (
+                  {plan.plan !== "free" && (
                     <p className="text-xs text-gray-400 dark:text-gray-600 text-center mt-2">
                       Powered by Stripe · Secure checkout
                     </p>
@@ -228,19 +227,6 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* Stripe setup note for developers */}
-        {/*
-          STRIPE INTEGRATION TODO:
-          1. Install: npm install stripe @stripe/stripe-js
-          2. Add to .env.local: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY
-          3. Create products in Stripe Dashboard:
-             - Monthly Pro: $2.99/month (recurring)
-             - Annual Pro: $19.99/year (recurring)
-             - Lifetime: $49 (one-time)
-          4. Create /api/checkout/route.ts to create Stripe Checkout sessions
-          5. Create /api/webhooks/stripe/route.ts for subscription events
-          6. Replace #stripe-checkout-* hrefs with actual checkout flow
-        */}
       </main>
       <Footer />
     </>

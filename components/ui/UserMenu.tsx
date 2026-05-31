@@ -2,6 +2,33 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useStore } from "@/lib/store";
+import Link from "next/link";
+
+function ManageBillingButton({ onClose }: { onClose: () => void }) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleClick() {
+    onClose();
+    setLoading(true);
+    try {
+      const res = await fetch("/api/portal", { method: "POST" });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={loading}
+      className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+    >
+      {loading ? "Opening…" : "Manage billing"}
+    </button>
+  );
+}
 
 export default function UserMenu() {
   const { user, isPro, openAuthModal, signOut } = useStore();
@@ -59,6 +86,17 @@ export default function UserMenu() {
               </span>
             )}
           </div>
+          {isPro ? (
+            <ManageBillingButton onClose={() => setOpen(false)} />
+          ) : (
+            <Link
+              href="/pricing"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium"
+            >
+              Upgrade to Pro
+            </Link>
+          )}
           <button
             onClick={async () => { setOpen(false); await signOut(); }}
             className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
