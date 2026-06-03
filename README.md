@@ -88,6 +88,10 @@ Most focus apps fall into one of two traps:
 - [Recharts](https://recharts.org/) — charts and analytics
 - [Zustand](https://zustand-demo.pmnd.rs/) — state management
 - [Framer Motion](https://www.framer.com/motion/) — animations
+- [Supabase](https://supabase.com/) — auth + database
+- [Stripe](https://stripe.com/) — payments
+- [Sentry](https://sentry.io/) — error tracking
+- [PostHog](https://posthog.com/) — analytics + session replay
 - [Vercel](https://vercel.com/) — deployment
 
 ---
@@ -126,11 +130,9 @@ Open [http://localhost:3000](http://localhost:3000)
 | Plan     | Price                       |
 | -------- | --------------------------- |
 | Free     | 3 categories, 7-day history |
-| Monthly  | $3.99/mo                    |
-| Annual   | $29.99/yr                   |
-| Lifetime | $79 one-time                |
-
-3-day free trial on all paid plans.
+| Pro Monthly | $2.99/mo                 |
+| Pro Annual  | $19.99/yr (save 44%)     |
+| Lifetime | $49 one-time (early bird)   |
 
 ---
 
