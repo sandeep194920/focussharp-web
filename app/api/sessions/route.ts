@@ -43,23 +43,21 @@ export async function POST(request: NextRequest) {
 
   const session: Session = await request.json();
 
-  const { error } = await supabase.from("sessions").upsert(
-    [{
-      id: session.id,
-      user_id: user.id,
-      cat_id: session.catId,
-      cat_name: session.catName,
-      cat_color: session.catColor,
-      duration_mins: session.durationMins,
-      started_at: session.startedAt,
-      completed_at: session.completedAt,
-      completed: session.completed,
-      type: session.type,
-    }],
-    { onConflict: "id" }
-  );
+  const { error } = await supabase.from("sessions").insert({
+    id: session.id,
+    user_id: user.id,
+    cat_id: session.catId,
+    cat_name: session.catName,
+    cat_color: session.catColor,
+    duration_mins: session.durationMins,
+    started_at: session.startedAt,
+    completed_at: session.completedAt,
+    completed: session.completed,
+    type: session.type,
+  });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // 23505 = unique_violation (duplicate id) — safe to ignore, session already synced
+  if (error && error.code !== "23505") { console.error("[sessions POST]", error); return NextResponse.json({ error: error.message }, { status: 500 }); }
 
   return NextResponse.json({ ok: true });
 }

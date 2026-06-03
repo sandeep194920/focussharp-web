@@ -62,9 +62,9 @@ export async function POST(req: NextRequest) {
 
     // Subscription renewed (annual/monthly)
     case "invoice.paid": {
-      const invoice = event.data.object as Stripe.Invoice;
+      const invoice = event.data.object as Stripe.Invoice & { subscription?: string | null };
       const sub = invoice.subscription
-        ? await stripe.subscriptions.retrieve(invoice.subscription as string)
+        ? await stripe.subscriptions.retrieve(invoice.subscription)
         : null;
       const uid = sub?.metadata?.supabase_uid;
       if (uid) await setIsPro(uid, true);

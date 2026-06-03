@@ -8,6 +8,8 @@ import UserMenu from "@/components/ui/UserMenu";
 import AuthModal from "@/components/ui/AuthModal";
 import { useStore } from "@/lib/store";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
+import { stopAllSounds } from "@/lib/sounds";
+import { SpeakerWaveIcon, SpeakerXMarkIcon } from "@heroicons/react/24/outline";
 
 function TimerIcon({ className }: { className?: string }) {
   return (
@@ -45,6 +47,23 @@ const NAV_ITEMS = [
   { href: "/app/categories", label: "Categories", Icon: TagIcon },
 ];
 
+function SoundToggle() {
+  const { soundEnabled, setSoundEnabled } = useStore();
+  return (
+    <button
+      onClick={() => { if (soundEnabled) stopAllSounds(); setSoundEnabled(!soundEnabled); }}
+      className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150"
+      title={soundEnabled ? "Mute sounds" : "Unmute sounds"}
+    >
+      {soundEnabled ? (
+        <SpeakerWaveIcon className="w-4 h-4" />
+      ) : (
+        <SpeakerXMarkIcon className="w-4 h-4" />
+      )}
+    </button>
+  );
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { setUser, syncOnLogin } = useStore();
@@ -77,9 +96,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               FocusSharp
             </span>
           </Link>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center">
+            <SoundToggle />
             <ThemeToggle />
-            <UserMenu />
+            <div className="ml-1"><UserMenu /></div>
           </div>
         </div>
       </header>

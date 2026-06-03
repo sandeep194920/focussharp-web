@@ -124,6 +124,10 @@
 
 ## 💡 Wild ideas (low priority / research)
 
+- [ ] **Pause & Park** — park the current running session (freezes the timer, saves context)
+      and start a fresh one. On return, resume the parked session. One active timer at a time —
+      no multi-tasking, just context-switching with intent. Pro/Lifetime feature.
+
 - [ ] **Most active time of day** — show users their peak focus hours in the stats page
       (e.g. "You focus best between 9–11am"). Requires enough session history to be
       meaningful; better as a "week 3+" feature once users have built a habit.

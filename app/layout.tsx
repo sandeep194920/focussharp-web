@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import { Suspense } from "react";
+import { PHProvider } from "@/components/providers/PostHogProvider";
+import { PostHogPageView } from "@/components/providers/PostHogPageView";
 import "./globals.css";
 
 const inter = Inter({
@@ -95,8 +98,13 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        {children}
-        <Analytics />
+        <PHProvider>
+          <Suspense fallback={null}>
+            <PostHogPageView />
+          </Suspense>
+          {children}
+          <Analytics />
+        </PHProvider>
       </body>
     </html>
   );

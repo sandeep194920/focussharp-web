@@ -1,6 +1,8 @@
 "use client";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { track } from "./analytics";
+import posthog from "posthog-js";
 
 export const CATEGORY_COLORS = [
   "#4f46e5", // indigo
@@ -168,6 +170,7 @@ export const useStore = create<AppState>()(
         };
         set((s) => ({ categories: [...s.categories, newCat] }));
         if (user) _pushCategory(newCat);
+        track('category_created', { color });
       },
 
       updateCategory: (id, name, color) => {
@@ -232,12 +235,17 @@ export const useStore = create<AppState>()(
             sessionStart: Date.now(),
           },
         }));
+        track('session_started', { duration_mins: timer.durationMins, category_name: cat.name, type: 'timed' });
       },
 
-      pauseTimer: () =>
-        set((s) => ({ timer: { ...s.timer, phase: "paused", pausedAt: Date.now() } })),
+      pauseTimer: () => {
+        const { timer } = get();
+        const elapsed = timer.totalSecs - timer.secsLeft;
+        set((s) => ({ timer: { ...s.timer, phase: "paused", pausedAt: Date.now() } }));
+        track('session_paused', { elapsed_secs: elapsed });
+      },
 
-      resumeTimer: () =>
+      resumeTimer: () => {
         set((s) => {
           const pauseDuration = s.timer.pausedAt ? Date.now() - s.timer.pausedAt : 0;
           return {
@@ -248,7 +256,9 @@ export const useStore = create<AppState>()(
               sessionStart: s.timer.sessionStart ? s.timer.sessionStart + pauseDuration : Date.now(),
             },
           };
-        }),
+        });
+        track('session_resumed');
+      },
 
       tickTimer: () => {
         const { timer, categories, addSession } = get();
@@ -268,6 +278,7 @@ export const useStore = create<AppState>()(
               completed: true,
               type: "focus",
             });
+            track('session_completed', { duration_mins: timer.durationMins, category_name: cat.name });
           }
           set((s) => ({
             timer: { ...s.timer, phase: "break", secsLeft: 0, breakSecsLeft: 0, breakType: null },
@@ -280,7 +291,8 @@ export const useStore = create<AppState>()(
       endSessionEarly: () => {
         const { timer, categories, addSession } = get();
         const cat = categories.find((c) => c.id === timer.activeCatId);
-        const elapsed = Math.floor((timer.totalSecs - timer.secsLeft) / 60);
+        const elapsedSecs = timer.totalSecs - timer.secsLeft;
+        const elapsed = Math.floor(elapsedSecs / 60);
         if (cat && timer.sessionStart && elapsed >= 1) {
           addSession({
             catId: cat.id,
@@ -293,6 +305,7 @@ export const useStore = create<AppState>()(
             type: "focus",
           });
         }
+        track('session_ended_early', { elapsed_secs: elapsedSecs, planned_mins: timer.durationMins, category_name: cat?.name });
         set((s) => ({
           timer: { ...s.timer, phase: "break", secsLeft: 0, breakSecsLeft: 0, breakType: null },
         }));
@@ -312,6 +325,7 @@ export const useStore = create<AppState>()(
             pausedAt: null,
           },
         }));
+        track('session_started', { duration_mins: 0, category_name: cat.name, type: 'flow' });
       },
 
       pauseOpenSession: () =>
@@ -369,7 +383,7 @@ export const useStore = create<AppState>()(
         }));
       },
 
-      startBreak: (type, mins) =>
+      startBreak: (type, mins) => {
         set((s) => ({
           timer: {
             ...s.timer,
@@ -379,12 +393,16 @@ export const useStore = create<AppState>()(
             breakStart: Date.now(),
             breakType: type,
           },
-        })),
+        }));
+        track('break_started', { break_type: 'timed', duration_mins: mins });
+      },
 
-      startOpenBreak: () =>
+      startOpenBreak: () => {
         set((s) => ({
           timer: { ...s.timer, phase: "open-break", breakType: "open" },
-        })),
+        }));
+        track('break_started', { break_type: 'open' });
+      },
 
       endBreak: () =>
         set((s) => ({
@@ -404,7 +422,7 @@ export const useStore = create<AppState>()(
           },
         })),
 
-      skipBreak: () =>
+      skipBreak: () => {
         set((s) => ({
           timer: {
             ...s.timer,
@@ -420,7 +438,9 @@ export const useStore = create<AppState>()(
             pausedAt: null,
             secsElapsed: 0,
           },
-        })),
+        }));
+        track('break_skipped');
+      },
 
       tickBreak: () => {
         const { timer } = get();
@@ -479,11 +499,18 @@ export const useStore = create<AppState>()(
       signOut: async () => {
         await fetch("/api/auth/signout", { method: "POST" });
         set({ user: null, isPro: false });
+        track('sign_out');
+        posthog.reset();
       },
 
       syncOnLogin: async () => {
         set({ isSyncing: true });
         try {
+          const currentUser = get().user;
+          if (currentUser) {
+            posthog.identify(currentUser.id, { email: currentUser.email });
+            track('sign_in');
+          }
           const [profileRes, categoriesRes, sessionsRes] = await Promise.all([
             fetch("/api/profile"),
             fetch("/api/categories"),

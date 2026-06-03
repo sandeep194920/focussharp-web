@@ -31,12 +31,23 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { id, name, color, createdAt } = body as { id: string; name: string; color: string; createdAt: number };
 
-  const { error } = await supabase.from("categories").upsert(
-    [{ id, user_id: user.id, name, color, created_at: createdAt }],
-    { onConflict: "id" }
-  );
+  // Try insert first; if the category already exists, update name/color
+  const { error: insertError } = await supabase
+    .from("categories")
+    .insert({ id, user_id: user.id, name, color, created_at: createdAt });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (insertError && insertError.code === "23505") {
+    // Duplicate — update the existing row (owner already verified by RLS)
+    const { error: updateError } = await supabase
+      .from("categories")
+      .update({ name, color })
+      .eq("id", id)
+      .eq("user_id", user.id);
+    if (updateError) { console.error("[categories POST update]", updateError); return NextResponse.json({ error: updateError.message }, { status: 500 }); }
+  } else if (insertError) {
+    console.error("[categories POST]", insertError);
+    return NextResponse.json({ error: insertError.message }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }
