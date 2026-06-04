@@ -85,14 +85,73 @@ This line says: "on the `categories` table, build and maintain an index on the `
 
 Every single query our app makes is filtered by `user_id` (because of RLS — explained next). Without the index, every page load would scan the entire table. With the index, it's a direct lookup no matter how many total users or rows exist.
 
+### How query time scales
+
+**Without index:** query time grows linearly with total rows. 1,000 users × 5 categories each = 5,000 rows scanned on every single page load, for every user.
+
+**With index:** query time is effectively constant. Doesn't matter if you have 1,000 or 1,000,000 users — your query jumps directly to your 5 rows every time.
+
+At small scale (hundreds of users) both feel instant. The index starts visibly mattering at tens of thousands of users. But it costs almost nothing to add upfront, so you always add it early.
+
 ### The tradeoff
 
-Indexes make reads faster but writes very slightly slower (when you insert a new row, the index needs to be updated too). For our app — many reads, few writes — it's always worth it.
+Indexes make reads faster but writes very slightly slower (when you insert a new row, the index needs to be updated too). For FocusSharp — many reads on every page load, occasional writes when adding a category — it's always worth it.
 
 We created three indexes:
-- `categories_user_id_idx` — fast lookup of a user's categories
-- `sessions_user_id_idx` — fast lookup of a user's sessions
-- `sessions_completed_at_idx` — fast sorting of sessions by date (for the stats bar chart)
+
+**1. `categories_user_id_idx`**
+```sql
+create index categories_user_id_idx on public.categories(user_id);
+```
+When the app loads your categories page, it runs `SELECT * FROM categories WHERE user_id = 'you'`. Without this index, Postgres reads every category row in the entire database — every row from every user — and throws away the ones that aren't yours. With this index, it goes directly to your rows. Since RLS filters by `user_id` on every single query, this index is hit on every page load.
+
+**2. `sessions_user_id_idx`**
+```sql
+create index sessions_user_id_idx on public.sessions(user_id);
+```
+Same idea as above but for sessions. Your sessions table will grow the fastest — every focus session you complete adds a row. Every user's stats page load queries `WHERE user_id = 'you'`. This index makes that lookup instant regardless of how many total sessions exist across all users.
+
+**3. `sessions_completed_at_idx`**
+```sql
+create index sessions_completed_at_idx on public.sessions(completed_at);
+```
+This one is different — it's not on `user_id`, it's on the timestamp. The stats bar chart needs sessions sorted and grouped by date: "give me all sessions from the last 7 days, ordered by when they happened." That query has two conditions — filter by user, then sort by date. The `user_id` index handles the filter. This index handles the sort. Without it, Postgres would find your sessions (fast, via index #2) but then have to read through all of them in random order to sort them by date. With this index, they come back pre-sorted.
+
+### How to measure whether an index is being used
+
+You never reference an index explicitly in your queries — Postgres chooses automatically whether to use it. To see what actually happened, use `EXPLAIN ANALYZE` in the Supabase SQL Editor:
+
+```sql
+EXPLAIN ANALYZE
+SELECT * FROM public.categories WHERE user_id = 'some-real-user-id-here';
+```
+
+**Output with index (good):**
+```
+Index Scan using categories_user_id_idx on categories
+  Index Cond: (user_id = 'abc...')
+  Rows Removed by Filter: 0
+  Execution Time: 0.12 ms
+```
+
+**Output without index (bad):**
+```
+Seq Scan on categories
+  Filter: (user_id = 'abc...')
+  Rows Removed by Filter: 4995
+  Execution Time: 3.4 ms
+```
+
+The key things to read:
+
+| Term | What it means |
+|---|---|
+| `Index Scan` | Good — used the index, jumped directly to matching rows |
+| `Seq Scan` | Sequential scan — read every single row in the table |
+| `Rows Removed by Filter` | How many rows it read and threw away — high number is bad |
+| `Execution Time` | How long the query took in milliseconds |
+
+`Seq Scan` vs `Index Scan` tells you definitively whether the index is being used, regardless of how fast the numbers look at small scale.
 
 ---
 
