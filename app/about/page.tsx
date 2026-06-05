@@ -9,9 +9,28 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://focussharp.app/about" },
 };
 
+const personJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Sandeep Amarnath",
+  url: "https://staarsolutions.ca",
+  jobTitle: "Designer & Developer",
+  description: "Building FocusSharp and upcoming native Swift/SwiftUI apps for iOS, watchOS, and macOS.",
+  sameAs: ["https://staarsolutions.ca"],
+  worksFor: {
+    "@type": "Organization",
+    name: "FocusSharp",
+    url: "https://focussharp.app",
+  },
+};
+
 export default function AboutPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+      />
       <Navbar />
       <main className="bg-white dark:bg-[#0a0a0e] min-h-screen">
         <div className="max-w-2xl mx-auto px-4 py-16">
@@ -30,27 +49,29 @@ export default function AboutPage() {
           </div>
 
           {/* Story */}
-          <div className="prose dark:prose-invert prose-gray max-w-none mb-12">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+          <div className="mb-12">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               The story
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-              I built FocusSharp because every focus app I tried had too much
-              going on. Streaks, badges, gamification, complex setups. I wanted
-              something that felt like a premium watch — precise, minimal, and
-              out of the way.
-            </p>
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-              The key question I kept asking: what would this look like as an
-              Apple Watch app? That design constraint became the product
-              philosophy. If it doesn&apos;t fit on a watch face, it&apos;s probably
-              clutter.
-            </p>
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              FocusSharp is the web precursor to native iOS, watchOS, and macOS
-              apps coming soon. The web app is fully functional today and your
-              data will sync across devices when the native apps launch.
-            </p>
+            <div className="flex flex-col gap-4 text-base text-gray-600 dark:text-gray-300 leading-relaxed">
+              <p>
+                I built FocusSharp because every focus app I tried had too much
+                going on. Streaks, badges, gamification, complex setups. I wanted
+                something that felt like a premium watch — precise, minimal, and
+                out of the way.
+              </p>
+              <p>
+                The key question I kept asking: what would this look like as an
+                Apple Watch app? That design constraint became the product
+                philosophy. If it doesn&apos;t fit on a watch face, it&apos;s probably
+                clutter.
+              </p>
+              <p>
+                FocusSharp is the web precursor to native iOS, watchOS, and macOS
+                apps coming soon. The web app is fully functional today and your
+                data will sync across devices when the native apps launch.
+              </p>
+            </div>
           </div>
 
           {/* Principles */}
@@ -68,10 +89,10 @@ export default function AboutPage() {
                 <div key={p.title} className="flex gap-3 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
                   <span className="text-indigo-500 mt-0.5">{p.icon}</span>
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white text-sm">
+                    <p className="font-medium text-gray-900 dark:text-white text-base">
                       {p.title}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                       {p.desc}
                     </p>
                   </div>

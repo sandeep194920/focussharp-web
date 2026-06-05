@@ -1,7 +1,7 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import UserMenu from "@/components/ui/UserMenu";
@@ -62,6 +62,17 @@ function SoundToggle() {
       )}
     </button>
   );
+}
+
+function AuthParamHandler() {
+  const searchParams = useSearchParams();
+  const { openAuthModal, user } = useStore();
+  useEffect(() => {
+    if (!user && searchParams.get("auth") === "signup") {
+      openAuthModal("sign-up");
+    }
+  }, [searchParams, openAuthModal, user]);
+  return null;
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -126,6 +137,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {isActive && (
                   <motion.div
                     layoutId="nav-indicator"
+                    transition={{ duration: 0.15, ease: "easeOut" }}
                     className="absolute inset-0 bg-indigo-50 dark:bg-indigo-500/15 rounded-xl"
                   />
                 )}
@@ -151,6 +163,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
       <AuthModal />
+      <Suspense fallback={null}><AuthParamHandler /></Suspense>
     </div>
   );
 }

@@ -45,10 +45,7 @@ export default function HeroTimer() {
         </span>
       </CircularProgress>
       <button
-        onClick={() => {
-          if (!running) setSecsLeft(DEMO_DURATION);
-          setRunning((r) => !r);
-        }}
+        onClick={() => setRunning((r) => !r)}
         className={`px-8 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 active:scale-[0.97] ${
           running
             ? "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"

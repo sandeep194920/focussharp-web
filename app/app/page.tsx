@@ -133,9 +133,10 @@ export default function AppPage() {
       <AnimatePresence mode="wait">
         <motion.div
           key="break"
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -12 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           className="flex flex-col items-center gap-6 py-4"
         >
           {/* Session done badge */}
@@ -241,15 +242,17 @@ export default function AppPage() {
     <AnimatePresence mode="wait">
       <motion.div
         key="timer"
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
         className="flex flex-col gap-5"
       >
         {breakJustEnded && (
           <motion.div
-            initial={{ opacity: 0, y: -6 }}
+            initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className="card px-4 py-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-center"
           >
             <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
@@ -453,11 +456,11 @@ export default function AppPage() {
             >
               {isOpenMode ? (
                 <div className="flex flex-col items-center gap-1">
-                  <span className={`text-4xl font-light transition-colors duration-300 ${activeCat ? "text-gray-100 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}>∞</span>
-                  <span className={`text-xs font-medium tracking-wide uppercase transition-colors duration-300 ${activeCat ? "text-gray-400 dark:text-gray-400" : "text-gray-400 dark:text-gray-500"}`}>Flow</span>
+                  <span className={`text-4xl font-light transition-colors duration-300 ${activeCat ? "text-gray-800 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}>∞</span>
+                  <span className={`text-xs font-medium tracking-wide uppercase transition-colors duration-300 ${activeCat ? "text-gray-500 dark:text-gray-400" : "text-gray-400 dark:text-gray-500"}`}>Flow</span>
                 </div>
               ) : (
-                <span className={`text-3xl font-medium tracking-tight transition-colors duration-300 ${activeCat ? "text-gray-100 dark:text-gray-100" : "text-gray-400 dark:text-gray-600"}`}>
+                <span className={`text-3xl font-medium tracking-tight transition-colors duration-300 ${activeCat ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-600"}`}>
                   {formatDuration(timer.durationMins)}
                 </span>
               )}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import CheckoutButton from "@/components/ui/CheckoutButton";
@@ -69,32 +70,77 @@ const PLANS = [
   },
 ];
 
-const FAQ = [
+const b = (text: string) => <strong className="font-semibold text-gray-900 dark:text-white">{text}</strong>;
+const hi = (text: string) => <span className="text-indigo-500 dark:text-indigo-400 font-medium">{text}</span>;
+
+const FAQ: { q: string; a: ReactNode; plain: string }[] = [
   {
     q: "Do I need an account to use FocusSharp?",
-    a: "No. You can use the app right now without signing up — your data is saved in your browser's local storage. Just know that if you clear your browser cache or switch devices, that data won't follow you. Create a free account to back it up to the cloud.",
+    a: <>No. You can use the app right now without signing up — your data is saved in your browser&apos;s local storage. Just know that if you clear your browser cache or switch devices, that data won&apos;t follow you. {hi("Create a free account")} to {b("back it up to the cloud")}.</>,
+    plain: "No. You can use the app right now without signing up — your data is saved in your browser's local storage. Just know that if you clear your browser cache or switch devices, that data won't follow you. Create a free account to back it up to the cloud.",
   },
   {
     q: "Can I cancel anytime?",
-    a: "Yes — cancelling stops your subscription from renewing, and you keep Pro access until the end of your current billing period. Monthly plans are billed month-to-month, so there's little to lose trying. Annual plans are billed for the full year upfront and are not refunded if cancelled mid-year, so they're best if you're already sure.",
+    a: <>Yes — cancelling stops your subscription from renewing, and {b("you keep Pro access until the end of your current billing period")}. Monthly plans are billed month-to-month, so there&apos;s little to lose trying. Annual plans are billed for the full year upfront and are not refunded if cancelled mid-year, so they&apos;re best if you&apos;re already sure.</>,
+    plain: "Yes — cancelling stops your subscription from renewing, and you keep Pro access until the end of your current billing period. Monthly plans are billed month-to-month, so there's little to lose trying. Annual plans are billed for the full year upfront and are not refunded if cancelled mid-year, so they're best if you're already sure.",
   },
   {
     q: "What happens to my data if I downgrade?",
-    a: "Your data is never deleted. If you downgrade from Pro to Free, you'll still see your last 7 days of history, and all older sessions are preserved — they'll come back if you re-upgrade.",
+    a: <>{b("Your data is never deleted.")} If you downgrade from Pro to Free, you&apos;ll still see your last 7 days of history, and {hi("all older sessions are preserved")} — they&apos;ll come back if you re-upgrade.</>,
+    plain: "Your data is never deleted. If you downgrade from Pro to Free, you'll still see your last 7 days of history, and all older sessions are preserved — they'll come back if you re-upgrade.",
   },
   {
     q: "Does the Lifetime plan include the native apps?",
-    a: "Yes. One payment unlocks FocusSharp on web now, and gives you access to the iOS, Apple Watch, and Mac apps when they launch — at no extra cost.",
+    a: <>Yes. {b("One payment")} unlocks FocusSharp on web now, and gives you access to the {hi("iOS, Apple Watch, and Mac apps")} when they launch — {b("at no extra cost")}.</>,
+    plain: "Yes. One payment unlocks FocusSharp on web now, and gives you access to the iOS, Apple Watch, and Mac apps when they launch — at no extra cost.",
   },
   {
     q: "What payment methods do you accept?",
-    a: "We use Stripe for secure payments. We accept all major credit and debit cards, Apple Pay, and Google Pay.",
+    a: <>We use Stripe for secure payments. We accept all major {b("credit and debit cards")}, {b("Apple Pay")}, and {b("Google Pay")}.</>,
+    plain: "We use Stripe for secure payments. We accept all major credit and debit cards, Apple Pay, and Google Pay.",
   },
 ];
 
 export default function PricingPage() {
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.plain,
+      },
+    })),
+  };
+
+  const softwareJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "FocusSharp",
+    applicationCategory: "ProductivityApplication",
+    applicationSubCategory: "Time Management",
+    operatingSystem: "Web, iOS (coming soon), macOS (coming soon)",
+    url: "https://focussharp.app",
+    offers: [
+      { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
+      { "@type": "Offer", name: "Pro Monthly", price: "2.99", priceCurrency: "USD", billingIncrement: 1 },
+      { "@type": "Offer", name: "Pro Annual", price: "19.99", priceCurrency: "USD", billingIncrement: 12 },
+      { "@type": "Offer", name: "Lifetime", price: "49", priceCurrency: "USD" },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
+      />
       <Navbar />
       <main className="bg-white dark:bg-[#0a0a0e] min-h-screen">
         {/* Header */}
@@ -218,7 +264,7 @@ export default function PricingPage() {
                   <p className="font-medium text-gray-900 dark:text-white mb-2">
                     {item.q}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                  <p className="text-base text-gray-500 dark:text-gray-300 leading-relaxed">
                     {item.a}
                   </p>
                 </div>

@@ -69,6 +69,7 @@ export default function LandingPage() {
     "@type": "SoftwareApplication",
     name: "FocusSharp",
     applicationCategory: "ProductivityApplication",
+    applicationSubCategory: "Time Management",
     operatingSystem: "Web, iOS (coming soon), macOS (coming soon)",
     offers: {
       "@type": "Offer",
@@ -78,6 +79,13 @@ export default function LandingPage() {
     description:
       "FocusSharp is a minimal focus timer and time tracking app for deep work, studying, and flow states.",
     url: "https://focussharp.app",
+    featureList: [
+      "Focus timer with Pomodoro and Flow session modes",
+      "Category tracking for deep work, study sessions, and more",
+      "Smart breaks — timed, open, or skip",
+      "Session history and stats with charts",
+      "No account required — data stored locally",
+    ],
     author: {
       "@type": "Person",
       name: "Sandeep Amarnath",
@@ -127,9 +135,16 @@ export default function LandingPage() {
                     See Pro plans
                   </Link>
                 </div>
-                <p className="mt-4 text-xs text-gray-400 dark:text-gray-600">
-                  No account required · Data stays in your browser · Sign up free to sync across devices
-                </p>
+                <div className="mt-4 space-y-1">
+                  <p className="text-sm text-gray-400 dark:text-gray-400">
+                    No account required · Data stays in your browser
+                  </p>
+                  <p className="text-sm">
+                    <Link href="/app?auth=signup" className="text-indigo-500 dark:text-indigo-400 hover:underline font-medium">
+                      Sign up free to sync across devices →
+                    </Link>
+                  </p>
+                </div>
               </div>
               {/* Live timer demo */}
               <div className="flex justify-center">
@@ -177,7 +192,7 @@ export default function LandingPage() {
               <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white tracking-tight mb-3">
                 Everything you need to track focus
               </h2>
-              <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
+              <p className="text-gray-500 dark:text-gray-300 max-w-xl mx-auto">
                 No clutter, no streaks, no badges. Just a beautifully minimal
                 timer and the data to understand how you spend your focus time.
               </p>
@@ -192,7 +207,7 @@ export default function LandingPage() {
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1.5">
                     {f.title}
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                  <p className="text-base text-gray-500 dark:text-gray-300 leading-relaxed">
                     {f.desc}
                   </p>
                 </div>
@@ -214,7 +229,7 @@ export default function LandingPage() {
                     actually focus
                   </span>
                 </h2>
-                <p className="text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
+                <p className="text-gray-500 dark:text-gray-300 leading-relaxed mb-6">
                   Most timers force you into rigid cycles. FocusSharp gives you
                   control — before the session and after it.
                 </p>
@@ -227,10 +242,10 @@ export default function LandingPage() {
                     <div key={b.title} className="flex items-start gap-3">
                       <span className="text-xl mt-0.5">{b.icon}</span>
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white text-sm">
+                        <p className="font-medium text-gray-900 dark:text-white text-base">
                           {b.title}
                         </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-base text-gray-500 dark:text-gray-300">
                           {b.desc}
                         </p>
                       </div>
@@ -288,7 +303,7 @@ export default function LandingPage() {
             <h2 className="text-3xl font-semibold text-gray-900 dark:text-white tracking-tight mb-3">
               Simple, honest pricing
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-8">
+            <p className="text-gray-500 dark:text-gray-300 mb-8">
               Start free. Upgrade when you&apos;re ready for more.
             </p>
             <div className="grid sm:grid-cols-3 gap-5 max-w-3xl mx-auto">
@@ -393,7 +408,7 @@ export default function LandingPage() {
                     <p className="font-medium text-gray-900 dark:text-white text-sm">
                       {t.name}
                     </p>
-                    <p className="text-xs text-gray-400">{t.role}</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-400">{t.role}</p>
                   </div>
                 </div>
               ))}
@@ -411,7 +426,7 @@ export default function LandingPage() {
             <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white tracking-tight mb-4">
               FocusSharp. Everywhere you focus.
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto mb-10">
+            <p className="text-gray-500 dark:text-gray-300 max-w-xl mx-auto mb-10">
               The web app is live now. Native apps are in development —
               same minimal design, built for the devices you already use.
             </p>
@@ -426,7 +441,7 @@ export default function LandingPage() {
                   <p className="font-semibold text-gray-900 dark:text-white mb-1">
                     {p.platform}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  <p className="text-sm text-gray-500 dark:text-gray-300 leading-relaxed">
                     {p.desc}
                   </p>
                 </div>
@@ -438,7 +453,7 @@ export default function LandingPage() {
               <p className="font-semibold text-gray-900 dark:text-white mb-1">
                 Get notified at launch
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">
                 Be first to know when the native apps are ready.
               </p>
               <EmailCapture />
