@@ -123,27 +123,35 @@ Vercel can serve your site at multiple URLs (with/without `www`, with/without tr
 
 ## JSON-LD / Structured Data — Rich results in Google
 
-**Files:** `app/page.tsx` (SoftwareApplication schema), `app/pricing/page.tsx` (FAQPage schema), `app/blog/[slug]/page.tsx` (Article schema)
+**Files:** `app/layout.tsx` (WebSite), `app/page.tsx` (SoftwareApplication), `app/pricing/page.tsx` (FAQPage + SoftwareApplication), `app/about/page.tsx` (Person), `app/blog/page.tsx` (Blog), `app/blog/[slug]/page.tsx` (Article)
 
 ### What it is
 JSON-LD is a way to describe your content in a structured format that Google can parse. It enables **rich results** — enhanced search listings that look different from normal results.
 
 ### Types we use
 
-**SoftwareApplication (homepage)**
-Tells Google this is an app. Can show star ratings, price, and platform info directly in search results.
+**WebSite (root layout — every page)**
+Signals the site entity globally. Helps Google build a knowledge graph entry for FocusSharp.
+
+```json
+{ "@type": "WebSite", "name": "FocusSharp", "url": "https://focussharp.app" }
+```
+
+**SoftwareApplication (homepage + pricing page)**
+Tells Google this is an app. On the homepage it describes the free tier. On the pricing page it lists all four offer tiers (Free, Pro Monthly, Pro Annual, Lifetime) so Google understands the product's pricing structure.
 
 ```json
 {
   "@type": "SoftwareApplication",
-  "name": "FocusSharp",
   "applicationCategory": "ProductivityApplication",
-  "offers": { "price": "0" }
+  "applicationSubCategory": "Time Management",
+  "featureList": ["Focus timer with Pomodoro and Flow session modes", ...],
+  "offers": [{ "price": "0" }, { "price": "2.99" }, ...]
 }
 ```
 
 **FAQPage (pricing page)**
-The 5 FAQ items on the pricing page. When this is indexed, Google can show expandable Q&A directly in search results — no click required. Looks like this in search:
+The 5 FAQ items on the pricing page. When this is indexed, Google can show expandable Q&A directly in search results — no click required. Note: Google restricted FAQ rich results to high-authority sites in 2023, so new sites won't see this immediately. The schema is correct and will become eligible as the site grows.
 
 ```
 FocusSharp Pricing — focussharp.app
@@ -152,11 +160,19 @@ FocusSharp Pricing — focussharp.app
 ▼ Can I cancel anytime?
 ```
 
+**Person (about page)**
+Describes Sandeep as the author entity. This is important because the Article schema on every blog post references the same author — Google connects the dots and builds a trusted author entity, which improves article credibility in search.
+
+**Blog (blog index)**
+Tells Google the blog page is a collection of articles with a publisher. Helps Google understand the content hierarchy.
+
 **Article (each blog post)**
-Tells Google this is an article with a specific author and publish date. Can enable "Top stories" carousel placement and shows the publish date in results.
+Tells Google this is an article with a specific author, publish date, and canonical image. Includes `mainEntityOfPage` (the canonical URL) and `image` (the OG image). Can enable "Top stories" carousel placement and shows the publish date in results.
 
 ### How to test it
 Go to `search.google.com/test/rich-results`, paste a URL, and Google will tell you if your structured data is valid and what rich results it qualifies for.
+
+**Important:** "No rich results detected" on a new site is normal — it doesn't mean the schema is broken. Google validates the format but restricts rich result eligibility to sites with sufficient authority. Use Google Search Console to monitor actual schema detection over time.
 
 ---
 
@@ -218,9 +234,18 @@ Blog posts:
 3. Bring in readers who become users
 4. Compound over time — a post written today can send traffic for years
 
-### The two posts we wrote
-1. `why-pomodoro-fails-deep-work` — targets "deep work timer", "pomodoro timer fails"
-2. `focus-timer-no-signup` — targets "focus timer no signup", "free focus timer"
+### The posts we've written
+
+| Slug | Target keywords | Angle |
+|---|---|---|
+| `why-pomodoro-fails-deep-work` | "deep work timer", "pomodoro timer fails" | Why 25-min cycles sabotage flow state; longer blocks are better |
+| `focus-timer-no-signup` | "focus timer no signup", "free focus timer" | Why signup walls are backwards; no-account-first approach |
+| `flow-state-timer-open-ended-focus` | "flow state timer", "open ended timer" | Count-up mode removes countdown anxiety; connects to Flow mode in app |
+| `pomodoro-vs-flow-state-which-is-right` | "pomodoro vs flow state", "pomodoro alternative" | Side-by-side comparison; FocusSharp supports both in one app |
+| `science-of-breaks-timed-vs-open` | "focus break science", "open break timer" | Attention restoration theory; connects to timed/open/skip break picker |
+| `how-to-track-deep-work-by-category` | "track deep work", "time tracking by category" | Cal Newport's deep work hours metric; connects to category stats |
+
+Each post ends with a CTA linking to `/app` and referencing a specific FocusSharp feature (Flow mode, dual session types, break picker, category stats). This creates a content → conversion path.
 
 ### How to add more posts
 1. Create `content/blog/your-post-slug.mdx`
@@ -285,7 +310,7 @@ Check it monthly once you've published a few posts. Don't obsess over it daily �
 | `robots.txt` | Tells crawlers what to skip | `app/robots.ts` |
 | Meta title/description | Your Google listing text | Each page's `metadata` export |
 | Canonical URLs | Prevents duplicate content penalties | `alternates.canonical` in metadata |
-| JSON-LD schemas | Enables rich results (FAQ, Article, App) | Inline `<script>` in page components |
+| JSON-LD schemas | Enables rich results (FAQ, Article, App) | Inline `<script>` in page components — WebSite (global), SoftwareApplication (home + pricing), FAQPage (pricing), Person (about), Blog (blog index), Article (each post) |
 | Open Graph tags | Social sharing card previews | `app/layout.tsx` + `/og` route |
 | Blog posts | Actual content Google can rank | `content/blog/*.mdx` |
 | Google Search Console | Submit pages, track rankings | search.google.com/search-console |

@@ -8,8 +8,22 @@ import { getAllPosts } from "@/lib/blog";
 export const metadata: Metadata = {
   title: "Blog — FocusSharp",
   description:
-    "Tips on deep work, focus techniques, time tracking, and productivity — from the FocusSharp team.",
+    "Research-backed articles on deep work, flow state, Pomodoro vs flow timers, break science, and time tracking by category — from the FocusSharp team.",
   alternates: { canonical: "https://focussharp.app/blog" },
+};
+
+const blogJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  name: "FocusSharp Blog",
+  description:
+    "Research-backed articles on deep work, flow state, Pomodoro vs flow timers, break science, and time tracking by category.",
+  url: "https://focussharp.app/blog",
+  publisher: {
+    "@type": "Organization",
+    name: "FocusSharp",
+    url: "https://focussharp.app",
+  },
 };
 
 export default function BlogPage() {
@@ -19,6 +33,10 @@ export default function BlogPage() {
     <>
       <Navbar />
       <main className="bg-white dark:bg-[#0a0a0e] min-h-screen">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
+        />
         <div className="max-w-3xl mx-auto px-4 py-16">
           <h1 className="text-3xl font-semibold text-gray-900 dark:text-white tracking-tight mb-2">
             Blog

@@ -43,6 +43,12 @@ export default function BlogPostPage({ params }: Props) {
     headline: post.meta.title,
     description: post.meta.description,
     datePublished: post.meta.date,
+    dateModified: post.meta.date,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://focussharp.app/blog/${params.slug}`,
+    },
+    image: `https://focussharp.app/og?title=${encodeURIComponent(post.meta.title)}&subtitle=${encodeURIComponent(post.meta.description)}`,
     author: {
       "@type": "Person",
       name: "Sandeep Amarnath",
@@ -85,7 +91,7 @@ export default function BlogPostPage({ params }: Props) {
             · {post.meta.readingTime}
           </p>
         </header>
-        <div className="prose prose-gray dark:prose-invert max-w-none prose-headings:font-semibold prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-a:no-underline hover:prose-a:underline">
+        <div className="prose prose-lg prose-gray dark:prose-invert max-w-none prose-headings:font-semibold prose-p:leading-relaxed prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-a:no-underline hover:prose-a:underline">
           <MDXRemote source={post.content} />
         </div>
         <footer className="mt-16 pt-8 border-t border-gray-100 dark:border-gray-800">

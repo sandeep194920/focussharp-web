@@ -97,9 +97,10 @@ export default function CategoriesPage() {
       <AnimatePresence>
         {showForm && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className="card p-4 flex flex-col gap-4"
           >
             <h2 className="font-medium text-gray-900 dark:text-white">
@@ -163,9 +164,10 @@ export default function CategoriesPage() {
             <motion.div
               key={cat.id}
               layout
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
               className="card p-4 flex items-center gap-3"
             >
               <div
