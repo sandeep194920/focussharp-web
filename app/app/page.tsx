@@ -112,6 +112,13 @@ export default function AppPage() {
 
   const activeCat = categories.find((c) => c.id === timer.activeCatId);
   const isOpenMode = timer.durationMins === 0;
+
+  function formatDuration(mins: number) {
+    if (mins < 60) return `${mins} min`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m === 0 ? `${h}h` : `${h}h ${m}m`;
+  }
   const progress = timer.totalSecs > 0 ? 1 - timer.secsLeft / timer.totalSecs : 0;
   // For open sessions: fill the ring slowly — cap visual at 120 min worth of seconds
   const OPEN_CAP_SECS = 120 * 60;
@@ -252,7 +259,17 @@ export default function AppPage() {
         )}
         {/* Category picker */}
         <div className="card p-4">
-          <p className="label-sm mb-3">Category</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="label-sm">Category</p>
+            {timer.phase === "idle" && (
+              <Link
+                href="/app/categories"
+                className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
+              >
+                Manage
+              </Link>
+            )}
+          </div>
           {categories.length === 0 ? (
             <Link
               href="/app/categories"
@@ -308,7 +325,7 @@ export default function AppPage() {
             <div className="flex items-center justify-between mb-3">
               <p className="label-sm">Duration</p>
               <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
-                {isOpenMode ? "Flow" : `${timer.durationMins} min`}
+                {isOpenMode ? "Flow" : formatDuration(timer.durationMins)}
               </span>
             </div>
             {/* Duration chips */}
@@ -370,7 +387,7 @@ export default function AppPage() {
                 {formatTime(timer.secsLeft)}
               </span>
               <span className="text-sm text-gray-400 dark:text-gray-400 mt-1 tabular-nums">
-                / {timer.durationMins}m
+                / {formatDuration(timer.durationMins)}
               </span>
               {activeCat && (
                 <span className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 flex items-center gap-1.5">
@@ -440,8 +457,8 @@ export default function AppPage() {
                   <span className={`text-xs font-medium tracking-wide uppercase transition-colors duration-300 ${activeCat ? "text-gray-400 dark:text-gray-400" : "text-gray-400 dark:text-gray-500"}`}>Flow</span>
                 </div>
               ) : (
-                <span className={`text-4xl font-medium tabular-nums tracking-tight transition-colors duration-300 ${activeCat ? "text-gray-100 dark:text-gray-100" : "text-gray-400 dark:text-gray-600"}`}>
-                  {String(timer.durationMins).padStart(2, "0")}:00
+                <span className={`text-3xl font-medium tracking-tight transition-colors duration-300 ${activeCat ? "text-gray-100 dark:text-gray-100" : "text-gray-400 dark:text-gray-600"}`}>
+                  {formatDuration(timer.durationMins)}
                 </span>
               )}
             </CircularProgress>

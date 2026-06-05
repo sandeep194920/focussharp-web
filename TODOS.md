@@ -7,17 +7,11 @@
 
 ## 🔥 High priority
 
-- [ ] **Stripe checkout integration** — wire up `/api/checkout` and `/api/webhooks/stripe`
-      for Pro monthly, annual, and Lifetime plans. Unlock `isPro` on successful payment.
-- [ ] **Email waitlist backend** — configure Resend (or similar SMTP) and wire up email
-      confirmation flow. EmailCapture component already posts to `/api/waitlist` but needs
-      a `source` prop passed from the landing page call sites (e.g. `source="landing-hero"`).
-- [ ] **Sentry error tracking** — add `@sentry/nextjs` before launch. Catches frontend JS
-      errors and API 500s with full stack traces. Free tier is sufficient. Without it, you'll
-      have no visibility into production errors.
-- [ ] **Supabase URL Configuration** — in Supabase dashboard → Authentication → URL
-      Configuration: set Site URL to `https://focussharp.app` and add redirect allowlist
-      entries for both local (`http://localhost:3002/**`) and prod (`https://focussharp.app/**`).
+- [x] **Stripe checkout integration** — wired up `/api/checkout`, `/api/webhooks/stripe`, `/api/portal`. Stripe prod keys set in Vercel.
+- [x] **Email waitlist backend** — `/api/waitlist` saves email to Supabase `waitlist` table (upsert on conflict). No SMTP needed; frontend shows confirmation message. No outbound email for now.
+- [x] **Sentry error tracking** — `@sentry/nextjs` integrated, DSN set in env vars.
+- [x] **Supabase URL Configuration** — Site URL set to `https://focussharp.app`, redirect URL `https://focussharp.app/api/auth/callback` added.
+- [x] **`NEXT_PUBLIC_APP_URL`** — set to `https://focussharp.app` in Vercel env vars.
 - [ ] **Notification API** — browser notification when a timed break ends (requires
       permission prompt, should be opt-in).
 - [ ] **Session history list** — a `/app/history` page listing all past sessions with
@@ -76,7 +70,8 @@
       `app/layout.tsx`) or Google Analytics 4.
 - [ ] **Email confirmation + SMTP** — turn "Confirm email" back on in Supabase before
       public launch. Set up Resend (free up to 3,000 emails/month) as the SMTP provider
-      so confirmation and notification emails deliver reliably.
+      so confirmation and notification emails deliver reliably. (Deferred — waitlist is
+      save-only for now; revisit when sending launch emails to the list.)
 
 ---
 
