@@ -42,7 +42,7 @@ export const metadata: Metadata = {
       "Track your deep work, study sessions, and flow states with FocusSharp — the minimal focus timer built for makers, students, and professionals.",
     images: [
       {
-        url: "/og?title=Focus Timer %26 Time Tracking&subtitle=Minimal. No gamification. Just pure focus.",
+        url: "/og?title=Focus Timer, Pomodoro %26 Deep Work Tracker&subtitle=Minimal. No gamification. Just pure focus.",
         width: 1200,
         height: 630,
         alt: "FocusSharp Focus Timer",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     title: "FocusSharp — Focus Timer & Time Tracking",
     description:
       "Minimal focus timer with category tracking. No signup. No gamification. Just pure focus.",
-    images: ["/og?title=Focus Timer %26 Time Tracking&subtitle=Minimal. No gamification. Just pure focus."],
+    images: ["/og?title=Focus Timer, Pomodoro %26 Deep Work Tracker&subtitle=Minimal. No gamification. Just pure focus."],
     creator: "@focussharpapp",
   },
   robots: {

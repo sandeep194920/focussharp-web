@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import EmailCapture from "@/components/ui/EmailCapture";
+import { getAllPosts } from "@/lib/blog";
 
 export const metadata: Metadata = {
   title: "Blog — FocusSharp",
@@ -10,31 +12,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://focussharp.app/blog" },
 };
 
-// Scaffold: future blog posts will be pulled from MDX or a CMS
-const COMING_SOON_POSTS = [
-  {
-    title: "Why the Pomodoro Technique Fails for Deep Work",
-    tags: ["Deep Work", "Productivity"],
-    eta: "Coming soon",
-  },
-  {
-    title: "How to Use Category Tracking to Find Your Peak Hours",
-    tags: ["Time Tracking", "Focus"],
-    eta: "Coming soon",
-  },
-  {
-    title: "Flow State vs Pomodoro: Which One Is Right for You?",
-    tags: ["Flow", "Focus Techniques"],
-    eta: "Coming soon",
-  },
-  {
-    title: "The Science Behind the Open Break",
-    tags: ["Breaks", "Neuroscience"],
-    eta: "Coming soon",
-  },
-];
-
 export default function BlogPage() {
+  const posts = getAllPosts();
+
   return (
     <>
       <Navbar />
@@ -47,35 +27,45 @@ export default function BlogPage() {
             Deep work, focus techniques, and time tracking insights.
           </p>
 
-          <div className="flex flex-col gap-4">
-            {COMING_SOON_POSTS.map((post) => (
-              <div
-                key={post.title}
-                className="card p-5 flex items-start justify-between gap-4 opacity-60"
-              >
-                <div>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {post.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-xs rounded-md font-medium"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+          {posts.length > 0 && (
+            <div className="flex flex-col gap-4 mb-10">
+              {posts.map((post) => (
+                <Link
+                  key={post.slug}
+                  href={`/blog/${post.slug}`}
+                  className="card card-hover p-5 flex items-start justify-between gap-4"
+                >
+                  <div>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {post.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-xs rounded-md font-medium"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="font-medium text-gray-800 dark:text-gray-200 mb-1">
+                      {post.title}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                      {post.description}
+                    </p>
                   </div>
-                  <p className="font-medium text-gray-800 dark:text-gray-200">
-                    {post.title}
-                  </p>
-                </div>
-                <span className="text-xs text-gray-400 whitespace-nowrap mt-1">
-                  {post.eta}
-                </span>
-              </div>
-            ))}
-          </div>
+                  <span className="text-xs text-gray-400 whitespace-nowrap mt-1">
+                    {new Date(post.date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
 
-          <div className="mt-10 card p-6 text-center bg-gray-50 dark:bg-gray-900/50">
+          <div className="mt-4 card p-6 text-center bg-gray-50 dark:bg-gray-900/50">
             <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">
               Get notified when we publish
             </p>
