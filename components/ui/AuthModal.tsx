@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStore } from "@/lib/store";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -8,6 +9,7 @@ export default function AuthModal() {
   const { authModal, closeAuthModal, openAuthModal, setUser, syncOnLogin } = useStore();
   const isOpen = authModal !== "closed";
   const mode = authModal === "sign-up" ? "sign-up" : "sign-in";
+  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,6 +54,7 @@ export default function AuthModal() {
           syncOnLogin();
           closeAuthModal();
           reset();
+          router.push("/app");
         } else {
           setSuccess("Check your email to confirm your account.");
         }
@@ -68,6 +71,7 @@ export default function AuthModal() {
           syncOnLogin();
           closeAuthModal();
           reset();
+          router.push("/app");
         }
       }
     } catch (err: unknown) {
