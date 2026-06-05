@@ -41,7 +41,7 @@ const FEATURES = [
   {
     icon: "☁️",
     title: "Your Data, Your Way",
-    desc: "Use it without an account — data stays in your browser. Sign up free to back it up to the cloud and access it on any device.",
+    desc: "Jump in without an account and start timing right away. Sign up free to customize categories, sync your data to the cloud, and access it on any device.",
   },
 ];
 
@@ -311,7 +311,7 @@ export default function LandingPage() {
                 {
                   name: "Free",
                   price: "$0",
-                  features: ["3 categories", "7-day history", "Web app", "Optional account to sync"],
+                  features: ["3 categories", "7-day history", "Web app", "Free account to customize & sync"],
                   cta: "Get started",
                   href: "/app",
                   highlight: false,

@@ -161,6 +161,7 @@ export const useStore = create<AppState>()(
 
       addCategory: (name, color) => {
         const { categories, isPro, user, _pushCategory } = get();
+        if (!user) return;
         if (!isPro && categories.length >= FREE_CATEGORY_LIMIT) return;
         const newCat: Category = {
           id: `cat-${Date.now()}`,
@@ -169,25 +170,25 @@ export const useStore = create<AppState>()(
           createdAt: Date.now(),
         };
         set((s) => ({ categories: [...s.categories, newCat] }));
-        if (user) _pushCategory(newCat);
+        _pushCategory(newCat);
         track('category_created', { color });
       },
 
       updateCategory: (id, name, color) => {
         const { user, _pushCategory } = get();
+        if (!user) return;
         set((s) => ({
           categories: s.categories.map((c) =>
             c.id === id ? { ...c, name, color } : c
           ),
         }));
-        if (user) {
-          const updated = get().categories.find((c) => c.id === id);
-          if (updated) _pushCategory(updated);
-        }
+        const updated = get().categories.find((c) => c.id === id);
+        if (updated) _pushCategory(updated);
       },
 
       deleteCategory: (id) => {
         const { user, _deleteRemoteCategory } = get();
+        if (!user) return;
         set((s) => ({
           categories: s.categories.filter((c) => c.id !== id),
           timer:
@@ -195,7 +196,7 @@ export const useStore = create<AppState>()(
               ? { ...defaultTimer }
               : s.timer,
         }));
-        if (user) _deleteRemoteCategory(id);
+        _deleteRemoteCategory(id);
       },
 
       addSession: (session) => {
@@ -522,7 +523,7 @@ export const useStore = create<AppState>()(
             get().setIsPro(profile.is_pro ?? false);
           }
 
-          const { categories: localCats, sessions: localSessions } = get();
+          const { sessions: localSessions } = get();
 
           if (categoriesRes.ok) {
             const remoteCats: Category[] = (await categoriesRes.json()).map(
@@ -533,15 +534,8 @@ export const useStore = create<AppState>()(
                 createdAt: r.created_at,
               })
             );
-
-            // Merge: union by id, remote wins on conflict
-            const remoteIds = new Set(remoteCats.map((c) => c.id));
-            const localOnly = localCats.filter((c) => !remoteIds.has(c.id));
-            const merged = [...remoteCats, ...localOnly];
-            set({ categories: merged });
-
-            // Push local-only records to DB
-            localOnly.forEach((c) => get()._pushCategory(c));
+            // Remote is always authoritative for categories — guests can't edit them
+            set({ categories: remoteCats.length > 0 ? remoteCats : defaultCategories });
           }
 
           if (sessionsRes.ok) {
