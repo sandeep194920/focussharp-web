@@ -47,7 +47,7 @@ export default function UserMenu() {
     return (
       <button
         onClick={() => openAuthModal("sign-in")}
-        className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-2 py-1"
+        className="text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:border-indigo-500 dark:hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg px-3 py-1.5 transition-colors"
       >
         Sign in
       </button>

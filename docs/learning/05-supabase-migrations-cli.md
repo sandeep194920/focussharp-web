@@ -92,9 +92,9 @@ This creates the `supabase/` folder. Already done — don't run again.
 3. Choose a region (Americas or closest to your users)
 4. Enable automatic RLS — yes, always check this
 5. Save the database password somewhere safe (you won't need it often but keep it)
-6. After it provisions, go to **Settings → API** and copy:
+6. After it provisions, go to **Connect → App Frameworks** (or **Settings → API**) and copy:
    - Project URL (`https://xxxx.supabase.co`)
-   - `anon` public key
+   - Publishable key (shown as `anon` / `publishable` depending on UI version)
    - `service_role` secret key (keep this secret — never commit it)
 
 ### Point your app at it
@@ -102,7 +102,7 @@ This creates the `supabase/` folder. Already done — don't run again.
 **Dev** — paste into `.env.local`:
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
@@ -112,10 +112,17 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 In the Supabase project dashboard → **Authentication → URL Configuration**:
 
-- **Dev project:** add `http://localhost:3000/api/auth/callback`
-- **Prod project:** add `https://focussharp.app/api/auth/callback`
+1. Set the **Site URL** (top field) to your app's base URL:
+   - Dev: `http://localhost:3000`
+   - Prod: `https://focussharp.app`
 
-If you skip this, Google OAuth and magic link emails will redirect to the wrong place and auth will break.
+2. Scroll down to **Redirect URLs** and click **Add URL**. Add the callback path:
+   - Dev: `http://localhost:3000/api/auth/callback`
+   - Prod: `https://focussharp.app/api/auth/callback`
+
+Do this separately in each project (dev project gets the localhost URL, prod project gets the focussharp.app URL).
+
+If you skip this, Google OAuth will break — the redirect URL check only matters for OAuth providers, not email/password auth. That's why things may appear to work without it until you add Google Sign-In.
 
 ---
 
@@ -262,8 +269,8 @@ That's it. All migrations run in order and your database is in the exact same st
 
 | Project | Ref | Used for |
 |---|---|---|
-| focussharp-dev | (your dev ref) | `.env.local` — local development |
-| focussharp-prod | (your prod ref) | Vercel env vars — real users |
+| focussharp-dev | `oxethxanhyhzlehonykv` | `.env.local` — local development |
+| focussharp-prod | (your prod ref — set up when ready to launch) | Vercel env vars — real users |
 
 Migration files live in: `supabase/migrations/`
 

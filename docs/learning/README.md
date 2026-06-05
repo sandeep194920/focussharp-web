@@ -11,7 +11,7 @@ Notes written while building FocusSharp. Each doc explains the concepts behind w
 Key concepts inside:
 - What Supabase is and why we chose it over Firebase
 - The 4 tables we created (profiles, categories, sessions, waitlist) and why each is structured the way it is
-- **Database indexes** — what they are, why they make queries fast, the key→rows mental model
+- **Database indexes** — what they are, why they make queries fast, the key→rows mental model, how query time scales with and without an index, and how to measure it with `EXPLAIN ANALYZE`
 - **Row Level Security (RLS)** — how Postgres enforces "users can only see their own data" at the database level
 - **Primary keys and foreign keys** — what uniquely identifies a row, and how tables link to each other
 - **`on delete cascade`** — what orphan rows are and how this prevents them
@@ -58,13 +58,57 @@ Key concepts inside:
 
 ---
 
-## What's Coming Next
+## [04 — Stripe Payments](./04-stripe-payments.md)
 
-As we build more features, new docs will be added here:
+**The big picture:** How Stripe is integrated for Pro subscriptions — checkout, webhooks, and the billing portal.
+
+Key concepts inside:
+- How Stripe Checkout works (hosted page vs embedded)
+- Webhooks — what they are and why Stripe uses them to tell your server what happened
+- Stripe's event model: `checkout.session.completed`, `customer.subscription.deleted`, etc.
+- How `is_pro` gets flipped in the database after a successful payment
+- The billing portal — letting users manage or cancel their subscription without you building a UI
+- Why you verify webhook signatures (and what happens if you don't)
+
+---
+
+## [05 — Supabase Migrations & CLI](./05-supabase-migrations-cli.md)
+
+**The big picture:** How to manage database schema changes cleanly using the Supabase CLI — so every change is tracked in git and reproducible on any environment.
+
+Key concepts inside:
+- **Why two separate Supabase projects** — dev vs prod, what each is for, why you never share them
+- **The `supabase/migrations/` folder** — how migration files are structured (timestamp + name + SQL)
+- One-time CLI setup per machine (`supabase login`, `supabase init`)
+- **Setting up a new Supabase project** step by step — from dashboard to env vars to auth redirect URLs
+- **`supabase link` and `supabase db push`** — how to point the CLI at a project and run migrations
+- **The dev → prod deployment flow** — the exact order to push migrations vs deploy code
+- **Creating new migrations** — `supabase migration new`, what to write in the file, when to push
+- **CLI vs Supabase SQL Editor** — schema changes go in migration files, data changes go in the SQL Editor, and what never to do (Table Editor)
+- Starting fresh on a new machine in 2 commands
+
+---
+
+## [06 — Database Triggers](./06-database-triggers.md)
+
+**The big picture:** What triggers are, how the auto-create-profile trigger works line by line, and the exact sequence of events when a user signs up.
+
+Key concepts inside:
+- What a trigger is — the motion sensor analogy (runs automatically, no app code calls it)
+- The two parts of every trigger: the **function** (what to do) and the **trigger** (when to do it)
+- Every line of `handle_new_user()` explained — `new`, `raw_user_meta_data`, `coalesce`, `security definer`
+- Every line of `on_auth_user_created` explained — `after insert`, `for each row`
+- **The exact step-by-step sequence** when a user signs up — from button click through database inserts to redirect to `/app`
+- Why a trigger is safer than doing this in app code — atomicity, no network gap, no half-created accounts
+- How to verify the trigger is working in the SQL Editor
+- When you'd add more triggers in the future (examples for FocusSharp)
+
+---
+
+## What's Coming Next
 
 | Topic | When |
 |---|---|
-| Stripe payments & webhooks | Phase 2 — before launch |
 | Apple IAP & Google Play Billing | Native app phase |
 | Vercel deployment & environment variables | Pre-launch |
 | Email confirmation & SMTP (Resend) | Pre-launch |
