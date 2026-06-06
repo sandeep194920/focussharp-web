@@ -1,59 +1,63 @@
-"use client";
-import { useState, useEffect, useRef } from "react";
-import CircularProgress from "@/components/timer/CircularProgress";
+import dynamic from "next/dynamic";
 
-const DEMO_DURATION = 25 * 60;
+const HeroTimerInteractive = dynamic(() => import("./HeroTimerInteractive"), {
+  ssr: false,
+  loading: () => <HeroTimerStatic />,
+});
 
-export default function HeroTimer() {
-  const [secsLeft, setSecsLeft] = useState(DEMO_DURATION);
-  const [running, setRunning] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(() => {
-        setSecsLeft((s) => {
-          if (s <= 1) {
-            setRunning(false);
-            return DEMO_DURATION;
-          }
-          return s - 1;
-        });
-      }, 1000);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [running]);
-
-  const progress = 1 - secsLeft / DEMO_DURATION;
-  const m = Math.floor(secsLeft / 60);
-  const s = secsLeft % 60;
-  const display = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+// Static SVG shell — rendered server-side, visible immediately (no JS needed)
+// Matches the interactive version exactly: size=200, strokeWidth=8, progress=0
+function HeroTimerStatic() {
+  const size = 200;
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <CircularProgress progress={progress} size={200} strokeWidth={8} color="#4f46e5">
-        <span className="text-4xl font-medium tabular-nums tracking-tight text-gray-900 dark:text-white">
-          {display}
-        </span>
-        <span className="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-indigo-500" />
-          Deep Work
-        </span>
-      </CircularProgress>
+      <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="absolute inset-0 -rotate-90" aria-hidden="true">
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            className="text-gray-200 dark:text-gray-800"
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="#4f46e5"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference}
+          />
+        </svg>
+        <div className="relative z-10 flex flex-col items-center justify-center">
+          <span className="text-4xl font-medium tabular-nums tracking-tight text-gray-900 dark:text-white">
+            25:00
+          </span>
+          <span className="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-indigo-500" />
+            Deep Work
+          </span>
+        </div>
+      </div>
       <button
-        onClick={() => setRunning((r) => !r)}
-        className={`px-8 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 active:scale-[0.97] ${
-          running
-            ? "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
-            : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-        }`}
+        disabled
+        className="px-8 py-2.5 rounded-xl font-medium text-sm bg-indigo-600 text-white shadow-sm opacity-90"
       >
-        {running ? "Pause demo" : "Try it live"}
+        Try it live
       </button>
     </div>
   );
+}
+
+export default function HeroTimer() {
+  return <HeroTimerInteractive />;
 }

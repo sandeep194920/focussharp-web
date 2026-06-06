@@ -201,3 +201,89 @@ browsers throttle intervals in background tabs. The fix was to store the session
 and compute elapsed time as `Date.now() - startTime` on each tick. The interval just triggers
 the re-render; the time itself comes from the wall clock. It's the same pattern used in game
 loops."*
+
+---
+
+## 4. Mobile LCP of 6.0s — Hero Timer Blocked by JavaScript
+
+### The problem
+
+PageSpeed Insights showed desktop scoring 95 but mobile only 70. The Largest Contentful Paint
+(LCP) on mobile was 6.0 seconds — well over Google's 2.5s "good" threshold.
+
+The LCP element was the circular demo timer in the hero section. It was a `"use client"` React
+component. That means the server sent an empty `<div>` to the browser, and the timer only
+appeared after the browser had downloaded, parsed, and executed the entire JS bundle. On a
+throttled mobile connection, that takes 6 seconds.
+
+### Why it was tricky
+
+The component worked perfectly — it just rendered too late. Nothing was broken. The problem was
+architectural: we were using a client-side component for something that could be shown statically
+from the server. The interactivity (the start/pause button) wasn't needed immediately. The visual
+(the ring and the 25:00 display) was the thing users needed to see first.
+
+The tricky part is that `"use client"` is contagious — once a component uses hooks like `useState`,
+it has to be a client component. You can't make it server-rendered without splitting it into two.
+
+### What I considered
+
+**Option A — Refactor to remove useState and make it server-rendered:**
+Not possible — the timer needs `useState` and `useEffect` to tick.
+
+**Option B — Add a skeleton/spinner as placeholder while JS loads:**
+Would have reduced CLS (layout shift) but not LCP — the timer still wouldn't paint until JS ran.
+The LCP element would just be the spinner, not the actual content.
+
+**Option C (chosen) — Static server shell + lazy-loaded interactive version:**
+Split into two components:
+- `HeroTimerStatic` — plain SVG with hardcoded `25:00`, no JS. Rendered by the server, included
+  in the initial HTML. Paints immediately.
+- `HeroTimerInteractive` — the real `"use client"` component with state and intervals.
+
+Use `next/dynamic` with `ssr: false` and `loading: () => <HeroTimerStatic />`:
+
+```tsx
+const HeroTimerInteractive = dynamic(() => import("./HeroTimerInteractive"), {
+  ssr: false,
+  loading: () => <HeroTimerStatic />,
+});
+```
+
+The browser sees the static SVG timer in the first HTML response. LCP is measured against that
+paint. The interactive version silently swaps in after JS loads — the user barely notices.
+
+### Also fixed: PostHog blocking the main thread
+
+PostHog analytics (~100KB) was initialising synchronously in a `useEffect` on every page. Even
+though `useEffect` runs after paint, the JS still had to be parsed and compiled as part of the
+initial bundle, adding to Total Blocking Time (TBT).
+
+Fix: defer init with `requestIdleCallback`:
+
+```ts
+requestIdleCallback(() => {
+  posthog.init(key, options)
+}, { timeout: 3000 })
+```
+
+The browser only runs this when the main thread is idle — after painting, layout, and user input
+are handled. The `timeout: 3000` ensures it runs within 3 seconds even on a very busy page.
+
+Also consolidated `PostHogPageView` (which was in a separate file and wrapped in `<Suspense>` in
+`layout.tsx`) into the provider itself, reducing one unnecessary component boundary.
+
+### The final fix — three files changed
+
+1. `HeroTimer.tsx` — converted from a client component to a server component that lazy-loads
+   `HeroTimerInteractive` and shows `HeroTimerStatic` while loading.
+2. `HeroTimerInteractive.tsx` — new file containing the original interactive logic, now only
+   loaded after hydration.
+3. `PostHogProvider.tsx` — merged `PostHogPageView` in, deferred init to `requestIdleCallback`.
+
+### The one-liner for interviews
+
+*"The hero timer on the landing page was a client component, which meant it couldn't render until
+JavaScript ran — that caused a 6-second LCP on mobile. I split it into a static server-rendered
+SVG shell that paints immediately, and a lazy-loaded interactive version that hydrates silently
+in the background. That dropped the LCP element from JS-dependent to HTML-dependent."*
