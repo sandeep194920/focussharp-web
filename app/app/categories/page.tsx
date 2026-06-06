@@ -88,7 +88,7 @@ export default function CategoriesPage() {
             Sign in to customize categories
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Create an account to add, edit, and sync your categories across devices.
+            Free account — no credit card needed. Add up to 3 categories and sync across devices.
           </p>
           <button
             onClick={() => openAuthModal("sign-up")}
@@ -253,7 +253,7 @@ export default function CategoriesPage() {
           ))}
         </AnimatePresence>
 
-        {categories.length === 0 && (
+        {categories.length === 0 && user && (
           <div className="card p-8 text-center">
             <p className="text-4xl mb-3">🏷</p>
             <p className="font-medium text-gray-700 dark:text-gray-300">

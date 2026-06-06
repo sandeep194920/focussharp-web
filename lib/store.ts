@@ -137,11 +137,13 @@ const defaultTimer: TimerState = {
   breakType: null,
 };
 
-const defaultCategories: Category[] = [
-  { id: "cat-1", name: "Deep Work", color: "#4f46e5", createdAt: Date.now() - 3000 },
-  { id: "cat-2", name: "Reading", color: "#10b981", createdAt: Date.now() - 2000 },
-  { id: "cat-3", name: "Admin", color: "#f59e0b", createdAt: Date.now() - 1000 },
-];
+const GUEST_CATEGORY: Category = {
+  id: "cat-default",
+  name: "Deep Work",
+  color: "#4f46e5",
+  createdAt: 0,
+};
+const defaultCategories: Category[] = [GUEST_CATEGORY];
 
 export const useStore = create<AppState>()(
   persist(
@@ -200,11 +202,12 @@ export const useStore = create<AppState>()(
       },
 
       addSession: (session) => {
+        const { user, _pushSession } = get();
+        if (!user) return;
         const id = `sess-${Date.now()}-${Math.random()}`;
         const newSession: Session = { ...session, id };
         set((s) => ({ sessions: [...s.sessions, newSession] }));
-        const { user, _pushSession } = get();
-        if (user) _pushSession(newSession);
+        _pushSession(newSession);
       },
 
       clearSessions: () => set({ sessions: [] }),
@@ -499,7 +502,7 @@ export const useStore = create<AppState>()(
 
       signOut: async () => {
         await fetch("/api/auth/signout", { method: "POST" });
-        set({ user: null, isPro: false });
+        set({ user: null, isPro: false, sessions: [], categories: defaultCategories });
         track('sign_out');
         posthog.reset();
       },
@@ -523,8 +526,6 @@ export const useStore = create<AppState>()(
             get().setIsPro(profile.is_pro ?? false);
           }
 
-          const { sessions: localSessions } = get();
-
           if (categoriesRes.ok) {
             const remoteCats: Category[] = (await categoriesRes.json()).map(
               (r: { id: string; name: string; color: string; created_at: number }) => ({
@@ -534,18 +535,12 @@ export const useStore = create<AppState>()(
                 createdAt: r.created_at,
               })
             );
-            // Remote is always authoritative for categories — guests can't edit them
             set({ categories: remoteCats.length > 0 ? remoteCats : defaultCategories });
           }
 
           if (sessionsRes.ok) {
             const remoteSessions: Session[] = await sessionsRes.json();
-            const remoteIds = new Set(remoteSessions.map((s) => s.id));
-            const localOnly = localSessions.filter((s) => !remoteIds.has(s.id));
-            const merged = [...remoteSessions, ...localOnly];
-            set({ sessions: merged });
-
-            localOnly.forEach((s) => get()._pushSession(s));
+            set({ sessions: remoteSessions });
           }
         } finally {
           set({ isSyncing: false });
@@ -557,7 +552,7 @@ export const useStore = create<AppState>()(
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: cat.id, name: cat.name, color: cat.color, createdAt: cat.createdAt }),
-        }).catch(() => {/* silent — data stays in localStorage */});
+        }).catch(() => {/* silent */});
       },
 
       _pushSession: (session) => {
@@ -580,8 +575,6 @@ export const useStore = create<AppState>()(
         isPro: s.isPro,
         theme: s.theme,
         soundEnabled: s.soundEnabled,
-        categories: s.categories,
-        sessions: s.sessions,
       }),
     }
   )

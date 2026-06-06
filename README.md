@@ -35,7 +35,7 @@ Most focus apps fall into one of two traps:
 | Flexible duration | ✅ Any length | ❌ Fixed 25 min | ✅ |
 | Flow / no-target mode | ✅ | ❌ | ✅ |
 | Category tracking | ✅ Simple | ❌ | ✅ Complex |
-| No account needed | ✅ | Varies | ❌ |
+| No account to try | ✅ | Varies | ❌ |
 | Apple-native feel | ✅ | ❌ | ❌ |
 | Break flow built in | ✅ | ✅ | ❌ |
 | Stats by category | ✅ | ❌ | ✅ |
@@ -75,8 +75,8 @@ Most focus apps fall into one of two traps:
 ### General
 - 🌙 **Dark mode** — full support, no flash on load
 - 📱 **Mobile first** — designed to feel like a native app on iOS Safari
-- 🔒 **No account required** — works fully offline, all data stored locally
-- ☁️ **Optional sync** — sign in to sync categories and sessions across devices (Supabase)
+- 🚀 **Try instantly** — no account needed to use the timer
+- ☁️ **Free account to save** — sign up free to save sessions, customize categories, and sync across devices (Supabase)
 
 ---
 

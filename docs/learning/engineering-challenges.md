@@ -55,59 +55,71 @@ obvious until we questioned the product decision underneath it.
 const DEFAULT_IDS = new Set(["cat-1", "cat-2", "cat-3"]);
 const localOnly = localCats.filter((c) => !remoteIds.has(c.id) && !DEFAULT_IDS.has(c.id));
 ```
-This would have worked but it's fragile — hardcoded IDs in business logic, and it doesn't
-scale if defaults ever change.
+Works but fragile — hardcoded IDs in business logic, doesn't scale if defaults change.
 
-**Option B — Remove the merge entirely; just replace with remote:**
+**Option B — Gate category edits behind `!!user`, simplify merge:**
+Guests can't create categories, so no local-only data to push. Replace merge with a straight
+remote replace. This fixed the category bug but sessions still lived in localStorage —
+meaning sign-out still showed stale signed-in data.
+
+**Option C (chosen — final architecture) — Guests are fully stateless:**
+After deeper thinking about the product model, the right answer was: guests shouldn't have
+persistent data at all. They can try the timer, but nothing is saved. Sign up to own your data.
+
+This eliminated the entire problem class:
+- No merge needed (nothing to merge)
+- No sync needed on sign-out (nothing to restore)
+- Supabase is the single and only source of truth for signed-in users
+- localStorage only holds theme and sound preferences
+
+### The final fix
+Four changes:
+
+1. **Single guest category** — replaced 3 default categories with one (`id: "cat-default"`),
+   making it unambiguous that this is a placeholder, not user data.
+
+2. **Store mutations gated** — `addCategory`, `updateCategory`, `deleteCategory`, and
+   `addSession` all return early if `!user`. Timer still works for guests but nothing is saved.
+
+3. **`syncOnLogin` simplified** — no merge at all. Just fetch from Supabase and replace
+   in-memory state:
 ```ts
-set({ categories: remoteCats.length > 0 ? remoteCats : defaultCategories });
-```
-Cleaner, but this breaks the guest-to-signed-in upgrade path (guest categories would be lost).
-
-**Option C (chosen) — Remove the root cause: guests can't create categories:**
-Gate `addCategory`, `updateCategory`, `deleteCategory` behind `!!user` in the store. Guests
-see the 3 defaults, read-only. The moment they sign in, Supabase is the only source of truth —
-no merge needed at all.
-
-### The fix
-Three changes:
-
-1. **Store** — all category mutations return early if `!user`:
-```ts
-addCategory: (name, color) => {
-  const { user, ... } = get();
-  if (!user) return; // guests can't edit
-  ...
-}
+set({ sessions: remoteSessions }); // straight replace, no merge
 ```
 
-2. **`syncOnLogin`** — simplified to a straight replace:
-```ts
-set({ categories: remoteCats.length > 0 ? remoteCats : defaultCategories });
-```
+4. **`partialize` stripped** — removed `categories` and `sessions` from Zustand's localStorage
+   persist. Only `theme`, `soundEnabled`, `isPro` are persisted. Data lives in Supabase.
 
-3. **Categories UI** — guests see a "Sign in to customize" nudge; edit/delete buttons hidden.
+5. **Stale localStorage cleanup** — one-time migration on page load strips any old
+   `categories`/`sessions` keys from existing users' localStorage.
 
 ### What I learned
-- **Product decisions and technical decisions are coupled.** The bug existed because the
-  product model (guest = read-only) wasn't enforced at the data layer. Fixing the product
-  boundary fixed the technical bug.
+- **Product decisions and technical decisions are tightly coupled.** Every sync bug traced
+  back to an unenforced product boundary — "what can a guest actually do?"
 - **Merge logic is a smell.** Any time you're merging two sources of truth, ask whether
-  you actually need two sources. Here we didn't — we just hadn't enforced one yet.
-- **localStorage as state is deceptively tricky** in apps that later add a backend. The
-  defaults that seem harmless at launch become ghost data once sync exists.
+  you actually need two sources. The answer here was no.
+- **"Guest mode" is a product decision, not a technical one.** Once we decided guests are
+  stateless, the entire data layer simplified dramatically — no merge, no conflict, no sync.
+- **localStorage as persistent state is deceptively tricky** once a backend exists. Data
+  that seems harmless at launch becomes ghost data the moment sync is involved.
 
 ### How to explain this in an interview
 *"I built a focus timer with localStorage for offline use, then added Supabase for cloud sync.
-When I wired up the login sync, users started seeing their deleted categories reappear. The root
-cause was that hardcoded default category IDs in localStorage were indistinguishable from
-user-created data — so the merge logic kept treating them as real guest data and pushing them
-back to the database on every sign-in.*
+When I wired up login sync, users started seeing deleted categories reappear. The root cause
+was that hardcoded default category IDs in localStorage were indistinguishable from real
+user-created data — the merge logic kept treating them as guest data and pushing them back
+to the database on every sign-in.*
 
-*My first instinct was to filter out the default IDs, but I realised that was patching a symptom.
-The real fix was to ask: should guests even be able to create categories? The answer was no — it
-simplified the whole sync model. Once guests are read-only, there's nothing to merge: sign-in
-just replaces local state with remote, and Supabase is the single source of truth."*
+*My first instinct was to filter out the default IDs — that would have fixed the immediate bug.
+But I stepped back and asked a product question: should guests be able to create data at all?
+The answer was no. Guests should be able to try the timer, but signing up is the moment you
+own your data.*
+
+*That product decision collapsed the entire technical problem. No guest data means no merge.
+No merge means Supabase is the single source of truth. I removed categories and sessions from
+localStorage entirely — they only live in memory while you're signed in, fetched fresh from
+Supabase on every login. Sign out clears memory. Sign back in restores everything. Clean,
+scalable, no edge cases."*
 
 ---
 

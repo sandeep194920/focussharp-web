@@ -276,3 +276,5 @@ Migration files live in: `supabase/migrations/`
 
 Current migrations:
 - `20260604034032_initial_schema.sql` — profiles, categories, sessions, waitlist, signup trigger
+- `20260605000000_waitlist_source_column.sql` — adds `source text` column to waitlist table (tracks where signups came from)
+- `20260605000001_waitlist_rls_anon.sql` — explicitly grants anon + authenticated roles insert access to waitlist (fixes RLS violation on prod)

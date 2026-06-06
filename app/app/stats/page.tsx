@@ -40,7 +40,7 @@ const BAR_DAYS: Record<Period, number> = {
 // AD_SLOT: replace with AdSense code when approved (stats sidebar, desktop only)
 
 export default function StatsPage() {
-  const { sessions, categories, isPro } = useStore();
+  const { sessions, categories, isPro, user, openAuthModal } = useStore();
   const [period, setPeriod] = useState<Period>("today");
 
   const filtered = filterSessionsByPeriod(sessions, period, isPro);
@@ -70,7 +70,7 @@ export default function StatsPage() {
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
           Stats
         </h1>
-        {!isPro && (
+        {user && !isPro && (
           <span className="text-xs text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
             7-day history •{" "}
             <Link href="/pricing" className="text-indigo-500 hover:underline">
@@ -80,20 +80,38 @@ export default function StatsPage() {
         )}
       </div>
 
-      {/* Period toggle */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800/60 p-1 rounded-xl">
-        {(["today", "week", "month"] as Period[]).map((p) => (
-          <button
-            key={p}
-            onClick={() => setPeriod(p)}
-            className={`tab ${period === p ? "tab-active" : ""}`}
-          >
-            {PERIOD_LABELS[p]}
-          </button>
-        ))}
-      </div>
+      {/* Period toggle — only shown for signed-in users */}
+      {user && (
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800/60 p-1 rounded-xl">
+          {(["today", "week", "month"] as Period[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`tab ${period === p ? "tab-active" : ""}`}
+            >
+              {PERIOD_LABELS[p]}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {isEmpty ? (
+      {!user ? (
+        <div className="card p-10 text-center">
+          <p className="text-4xl mb-3">📊</p>
+          <p className="font-medium text-gray-700 dark:text-gray-300">
+            Sign in to see your focus history
+          </p>
+          <p className="text-sm text-gray-400 dark:text-gray-600 mt-1">
+            Your sessions are saved to your account and sync across devices.
+          </p>
+          <button
+            onClick={() => openAuthModal("sign-in")}
+            className="btn-primary inline-block mt-4 text-sm"
+          >
+            Sign in
+          </button>
+        </div>
+      ) : isEmpty ? (
         <div className="card p-10 text-center">
           <p className="text-4xl mb-3">📊</p>
           <p className="font-medium text-gray-700 dark:text-gray-300">
