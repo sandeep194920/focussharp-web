@@ -55,7 +55,7 @@ export default function TermsPage() {
               },
               {
                 title: "9. Contact",
-                body: "Questions? Email hello@focussharp.app",
+                body: "Questions? Email sandeepamarnath@staarsolutions.ca",
               },
             ].map((section) => (
               <section key={section.title}>

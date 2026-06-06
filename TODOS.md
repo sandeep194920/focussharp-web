@@ -72,6 +72,14 @@
       public launch. Set up Resend (free up to 3,000 emails/month) as the SMTP provider
       so confirmation and notification emails deliver reliably. (Deferred — waitlist is
       save-only for now; revisit when sending launch emails to the list.)
+- [x] **Email user on membership change** — Resend sends welcome email on Pro upgrade and
+      cancellation notice on `customer.subscription.deleted`. Wired in `/api/webhooks/stripe`.
+- [x] **Email user on refund** — Resend sends refund confirmation on `charge.refunded` webhook.
+      Wired in `/api/webhooks/stripe`.
+- [x] **Notify founder on new Pro signup** — Resend notifies sandeepamarnath@staarsolutions.ca
+      on every `checkout.session.completed` event. Wired in `/api/webhooks/stripe`.
+- [x] **Notify founder on waitlist signup** — Resend notifies founder on every new waitlist
+      entry. Wired in `/api/waitlist`.
 
 ---
 
