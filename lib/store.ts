@@ -137,11 +137,13 @@ const defaultTimer: TimerState = {
   breakType: null,
 };
 
-const defaultCategories: Category[] = [
-  { id: "cat-1", name: "Deep Work", color: "#4f46e5", createdAt: Date.now() - 3000 },
-  { id: "cat-2", name: "Reading", color: "#10b981", createdAt: Date.now() - 2000 },
-  { id: "cat-3", name: "Admin", color: "#f59e0b", createdAt: Date.now() - 1000 },
-];
+const GUEST_CATEGORY: Category = {
+  id: "cat-default",
+  name: "Deep Work",
+  color: "#4f46e5",
+  createdAt: 0,
+};
+const defaultCategories: Category[] = [GUEST_CATEGORY];
 
 export const useStore = create<AppState>()(
   persist(
@@ -161,6 +163,7 @@ export const useStore = create<AppState>()(
 
       addCategory: (name, color) => {
         const { categories, isPro, user, _pushCategory } = get();
+        if (!user) return;
         if (!isPro && categories.length >= FREE_CATEGORY_LIMIT) return;
         const newCat: Category = {
           id: `cat-${Date.now()}`,
@@ -169,25 +172,25 @@ export const useStore = create<AppState>()(
           createdAt: Date.now(),
         };
         set((s) => ({ categories: [...s.categories, newCat] }));
-        if (user) _pushCategory(newCat);
+        _pushCategory(newCat);
         track('category_created', { color });
       },
 
       updateCategory: (id, name, color) => {
         const { user, _pushCategory } = get();
+        if (!user) return;
         set((s) => ({
           categories: s.categories.map((c) =>
             c.id === id ? { ...c, name, color } : c
           ),
         }));
-        if (user) {
-          const updated = get().categories.find((c) => c.id === id);
-          if (updated) _pushCategory(updated);
-        }
+        const updated = get().categories.find((c) => c.id === id);
+        if (updated) _pushCategory(updated);
       },
 
       deleteCategory: (id) => {
         const { user, _deleteRemoteCategory } = get();
+        if (!user) return;
         set((s) => ({
           categories: s.categories.filter((c) => c.id !== id),
           timer:
@@ -195,15 +198,16 @@ export const useStore = create<AppState>()(
               ? { ...defaultTimer }
               : s.timer,
         }));
-        if (user) _deleteRemoteCategory(id);
+        _deleteRemoteCategory(id);
       },
 
       addSession: (session) => {
+        const { user, _pushSession } = get();
+        if (!user) return;
         const id = `sess-${Date.now()}-${Math.random()}`;
         const newSession: Session = { ...session, id };
         set((s) => ({ sessions: [...s.sessions, newSession] }));
-        const { user, _pushSession } = get();
-        if (user) _pushSession(newSession);
+        _pushSession(newSession);
       },
 
       clearSessions: () => set({ sessions: [] }),
@@ -498,7 +502,7 @@ export const useStore = create<AppState>()(
 
       signOut: async () => {
         await fetch("/api/auth/signout", { method: "POST" });
-        set({ user: null, isPro: false });
+        set({ user: null, isPro: false, sessions: [], categories: defaultCategories });
         track('sign_out');
         posthog.reset();
       },
@@ -522,8 +526,6 @@ export const useStore = create<AppState>()(
             get().setIsPro(profile.is_pro ?? false);
           }
 
-          const { categories: localCats, sessions: localSessions } = get();
-
           if (categoriesRes.ok) {
             const remoteCats: Category[] = (await categoriesRes.json()).map(
               (r: { id: string; name: string; color: string; created_at: number }) => ({
@@ -533,25 +535,12 @@ export const useStore = create<AppState>()(
                 createdAt: r.created_at,
               })
             );
-
-            // Merge: union by id, remote wins on conflict
-            const remoteIds = new Set(remoteCats.map((c) => c.id));
-            const localOnly = localCats.filter((c) => !remoteIds.has(c.id));
-            const merged = [...remoteCats, ...localOnly];
-            set({ categories: merged });
-
-            // Push local-only records to DB
-            localOnly.forEach((c) => get()._pushCategory(c));
+            set({ categories: remoteCats.length > 0 ? remoteCats : defaultCategories });
           }
 
           if (sessionsRes.ok) {
             const remoteSessions: Session[] = await sessionsRes.json();
-            const remoteIds = new Set(remoteSessions.map((s) => s.id));
-            const localOnly = localSessions.filter((s) => !remoteIds.has(s.id));
-            const merged = [...remoteSessions, ...localOnly];
-            set({ sessions: merged });
-
-            localOnly.forEach((s) => get()._pushSession(s));
+            set({ sessions: remoteSessions });
           }
         } finally {
           set({ isSyncing: false });
@@ -563,7 +552,7 @@ export const useStore = create<AppState>()(
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: cat.id, name: cat.name, color: cat.color, createdAt: cat.createdAt }),
-        }).catch(() => {/* silent — data stays in localStorage */});
+        }).catch(() => {/* silent */});
       },
 
       _pushSession: (session) => {
@@ -586,8 +575,6 @@ export const useStore = create<AppState>()(
         isPro: s.isPro,
         theme: s.theme,
         soundEnabled: s.soundEnabled,
-        categories: s.categories,
-        sessions: s.sessions,
       }),
     }
   )

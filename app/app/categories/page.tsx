@@ -5,7 +5,7 @@ import { useStore, CATEGORY_COLORS, FREE_CATEGORY_LIMIT } from "@/lib/store";
 import Link from "next/link";
 
 export default function CategoriesPage() {
-  const { categories, isPro, addCategory, updateCategory, deleteCategory } =
+  const { categories, isPro, user, addCategory, updateCategory, deleteCategory, openAuthModal } =
     useStore();
 
   const [showForm, setShowForm] = useState(false);
@@ -14,7 +14,7 @@ export default function CategoriesPage() {
   const [color, setColor] = useState(CATEGORY_COLORS[0]);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  const canAdd = isPro || categories.length < FREE_CATEGORY_LIMIT;
+  const canAdd = !!user && (isPro || categories.length < FREE_CATEGORY_LIMIT);
 
   const openAdd = () => {
     setEditId(null);
@@ -59,12 +59,18 @@ export default function CategoriesPage() {
             Categories
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {isPro
+            {!user
+              ? "Sign in to customize"
+              : isPro
               ? `${categories.length} categories`
               : `${categories.length} / ${FREE_CATEGORY_LIMIT} (free plan)`}
           </p>
         </div>
-        {canAdd ? (
+        {!user ? (
+          <button onClick={() => openAuthModal("sign-in")} className="btn-primary text-sm px-3 py-2">
+            Sign in
+          </button>
+        ) : canAdd ? (
           <button onClick={openAdd} className="btn-primary text-sm px-3 py-2">
             + New
           </button>
@@ -75,8 +81,26 @@ export default function CategoriesPage() {
         )}
       </div>
 
+      {/* Guest nudge */}
+      {!user && (
+        <div className="card p-4 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Sign in to customize categories
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Free account — no credit card needed. Add up to 3 categories and sync across devices.
+          </p>
+          <button
+            onClick={() => openAuthModal("sign-up")}
+            className="inline-block mt-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Create free account →
+          </button>
+        </div>
+      )}
+
       {/* Pro upsell */}
-      {!isPro && categories.length >= FREE_CATEGORY_LIMIT && (
+      {user && !isPro && categories.length >= FREE_CATEGORY_LIMIT && (
         <div className="card p-4 bg-indigo-50 dark:bg-indigo-950/30 border-indigo-100 dark:border-indigo-900">
           <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
             Free plan limit reached
@@ -188,46 +212,48 @@ export default function CategoriesPage() {
                   {cat.name}
                 </p>
               </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => openEdit(cat.id)}
-                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                {confirmDelete === cat.id ? (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleDelete(cat.id)}
-                      className="px-2 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => setConfirmDelete(null)}
-                      className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
+              {user && (
+                <div className="flex items-center gap-1">
                   <button
-                    onClick={() => setConfirmDelete(cat.id)}
-                    className="p-2 rounded-lg text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+                    onClick={() => openEdit(cat.id)}
+                    className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
-                )}
-              </div>
+                  {confirmDelete === cat.id ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDelete(cat.id)}
+                        className="px-2 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(null)}
+                        className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDelete(cat.id)}
+                      className="p-2 rounded-lg text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
 
-        {categories.length === 0 && (
+        {categories.length === 0 && user && (
           <div className="card p-8 text-center">
             <p className="text-4xl mb-3">🏷</p>
             <p className="font-medium text-gray-700 dark:text-gray-300">

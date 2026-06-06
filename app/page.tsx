@@ -41,7 +41,7 @@ const FEATURES = [
   {
     icon: "☁️",
     title: "Your Data, Your Way",
-    desc: "Use it without an account — data stays in your browser. Sign up free to back it up to the cloud and access it on any device.",
+    desc: "Try the timer instantly — no account needed. Sign up free to save your sessions, customize categories, and access your history on any device.",
   },
 ];
 
@@ -108,7 +108,7 @@ export default function LandingPage() {
               <div className="text-center md:text-left">
                 <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-full text-sm font-medium mb-6">
                   <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                  Free to use · No signup required
+                  Free to use · No signup to try
                 </div>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-5">
                   The focus timer
@@ -137,11 +137,11 @@ export default function LandingPage() {
                 </div>
                 <div className="mt-4 space-y-1">
                   <p className="text-sm text-gray-400 dark:text-gray-400">
-                    No account required · Data stays in your browser
+                    Try it instantly · Sign up free to save your sessions
                   </p>
                   <p className="text-sm">
                     <Link href="/app?auth=signup" className="text-indigo-500 dark:text-indigo-400 hover:underline font-medium">
-                      Sign up free to sync across devices →
+                      Create a free account to track your focus →
                     </Link>
                   </p>
                 </div>
@@ -311,7 +311,7 @@ export default function LandingPage() {
                 {
                   name: "Free",
                   price: "$0",
-                  features: ["3 categories", "7-day history", "Web app", "Optional account to sync"],
+                  features: ["Try timer instantly", "Free account to save sessions", "3 categories", "7-day history"],
                   cta: "Get started",
                   href: "/app",
                   highlight: false,
@@ -456,7 +456,7 @@ export default function LandingPage() {
               <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">
                 Be first to know when the native apps are ready.
               </p>
-              <EmailCapture />
+              <EmailCapture source="landing" />
             </div>
           </div>
         </section>
@@ -468,7 +468,7 @@ export default function LandingPage() {
               Start your first focus session
             </h2>
             <p className="text-indigo-200 mb-8">
-              No signup. No setup. Just open the app and start.
+              No signup to try. Sign up free to save your sessions and track your progress.
             </p>
             <Link
               href="/app"

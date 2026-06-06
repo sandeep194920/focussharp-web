@@ -273,11 +273,19 @@ Google Search Console (GSC) is a free tool from Google. It's your direct line to
 Google gives you a TXT record to add, like:  
 `google-site-verification=xxxxxxxxxxxxxxxxxxxxxx`
 
-To add it:
-- Go to your Vercel dashboard → focussharp.app domain settings → DNS Records
-- Add a new TXT record with the value Google gave you
+To add it, you need to go to **wherever you bought your domain** (your domain registrar), not Vercel. Vercel hosts your app but doesn't manage DNS unless you transferred your nameservers to Vercel — which most people haven't done.
+
+For FocusSharp, the domain `focussharp.app` is registered at **Namecheap**:
+- Log in to namecheap.com
+- Click **Domain List** → **Manage** next to `focussharp.app`
+- Click the **Advanced DNS** tab
+- Under **Host Records**, click **Add New Record**
+- Set **Type** to `TXT Record`, **Host** to `@`, and paste the full `google-site-verification=...` string as the **Value**
+- Click the checkmark to save
 - Back in GSC, click "Verify"
 - It can take a few minutes for DNS to propagate
+
+**Why not Vercel?** Vercel's Domains page only shows what DNS records it *recommends* you set at your registrar — it doesn't let you add records unless you've pointed your domain's nameservers to Vercel. If you see a "DNS Change Recommended" badge in Vercel, that confirms DNS is managed externally at your registrar.
 
 **4. Submit your sitemap**
 - In GSC left sidebar → Sitemaps

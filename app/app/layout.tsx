@@ -80,6 +80,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { setUser, syncOnLogin } = useStore();
 
   useEffect(() => {
+    // One-time cleanup: remove legacy persisted categories/sessions from localStorage
+    try {
+      const raw = localStorage.getItem("focussharp-storage");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.state?.categories || parsed?.state?.sessions) {
+          delete parsed.state.categories;
+          delete parsed.state.sessions;
+          localStorage.setItem("focussharp-storage", JSON.stringify(parsed));
+        }
+      }
+    } catch { /* ignore */ }
+
     const supabase = getSupabaseBrowserClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
