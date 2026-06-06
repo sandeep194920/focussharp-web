@@ -105,10 +105,84 @@ Key concepts inside:
 
 ---
 
+## [Analytics — PostHog & Sentry](./analytics-posthog-sentry.md)
+
+**The big picture:** How product analytics and error tracking are wired up in FocusSharp.
+
+Key concepts inside:
+- PostHog for user behaviour tracking and session replay
+- Sentry for runtime error tracking in production
+- How to track custom events (`track()` helper)
+
+---
+
+## [SEO Explained](./seo-explained.md)
+
+**The big picture:** How FocusSharp is optimised for search engines.
+
+Key concepts inside:
+- Next.js Metadata API for titles, descriptions, Open Graph tags
+- JSON-LD structured data (SoftwareApplication schema)
+- Sitemap and robots.txt auto-generation
+- Target keywords and how they're used
+
+---
+
+## [Web Audio API & Sounds](./web-audio-api-sounds.md)
+
+**The big picture:** How browser-native sound effects work without any audio files.
+
+Key concepts inside:
+- Web Audio API — generating tones programmatically
+- Why we avoided audio files (no network request, no permissions)
+- How the sound toggle works
+
+---
+
+## [Stripe Payments — Plain English](./stripe-payments-explained.md)
+
+**The big picture:** How Stripe processes payments, fees, refunds, and payouts — written from real experience.
+
+Key concepts inside:
+- The exact flow of a single payment (charge → fee → balance → payout)
+- Stripe's fee structure (2.9% + $0.30, currency conversion)
+- Test mode vs live mode — test card numbers
+- **Refunds** — why you lose the fee even when refunding, how negative balance works
+- Subscriptions vs one-time payments
+- Webhooks — how payment events unlock Pro access in the app
+- Stripe balance vs bank account — the 2-day payout delay
+
+---
+
+## [Engineering Challenges](./engineering-challenges.md)
+
+**The big picture:** Real technical problems encountered while building FocusSharp — written for interview preparation.
+
+Challenges documented:
+- **localStorage + Supabase sync conflict** — how default categories caused ghost data on every login, the three solutions considered, and why the final architectural decision (guests are stateless) was the right one
+- **Flash of Unstyled Content (FOUC) in dark mode** — why React hydration is too late for theme init and how a blocking inline script fixes it
+- **Timer accuracy with setInterval** — why tick-counting drifts and how wall-clock diffing solves it
+
+---
+
+## [Tech Stack Used](./tech-stack-used.md)
+
+**The big picture:** Every technology used to build FocusSharp — a checklist reference for interviews.
+
+Covers:
+- Frontend (Next.js, TypeScript, Tailwind, Zustand, Framer Motion, Recharts)
+- Backend (Supabase, Next.js API Routes, Vercel)
+- Payments (Stripe, webhooks, customer portal)
+- Email (Resend — transactional emails for Pro upgrades, refunds, waitlist signups)
+- Analytics (PostHog, Sentry, Vercel Analytics)
+- Key architecture decisions
+- Free tier limits for every service
+
+---
+
 ## What's Coming Next
 
 | Topic | When |
 |---|---|
 | Apple IAP & Google Play Billing | Native app phase |
-| Vercel deployment & environment variables | Pre-launch |
-| Email confirmation & SMTP (Resend) | Pre-launch |
+| CloudKit sync | Native app phase |

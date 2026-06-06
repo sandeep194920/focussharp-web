@@ -79,7 +79,7 @@ export default function UserMenu() {
         <div className="absolute top-full right-0 mt-2 w-52 card p-1 shadow-lg z-50">
           <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
             <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{user.displayName ?? user.email}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-600 truncate">{user.email}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-400 truncate">{user.email}</p>
             {isPro && (
               <span className="inline-block mt-1 text-[10px] font-semibold bg-indigo-600 text-white rounded-full px-2 py-0.5">
                 Pro
