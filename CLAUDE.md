@@ -116,3 +116,66 @@ page for native app launch notifications.
 ## Future work
 
 See [TODOS.md](./TODOS.md) for a prioritised backlog of features and improvements.
+
+---
+
+## Documentation philosophy
+
+All learning docs live in `docs/learning/`. These are not just notes — they are a personal
+knowledge base Sandeep builds as he learns. Every doc should feel like a senior developer
+sitting next to you and explaining something from scratch, not a textbook.
+
+### Who we write for
+Sandeep is an experienced developer but newer to this specific stack (Supabase, Next.js App
+Router, Stripe, OAuth). He wants to deeply understand WHY things work, not just HOW to use
+them. He will re-read these docs later, in interviews, and when building future apps.
+
+### Writing style — ELI10 (Explain Like I'm 10)
+- Use plain English first. Introduce the technical term after the concept is clear.
+- Use analogies before code. Wristband at a concert, backstage pass, hotel key card — these
+  land before JWT ever does.
+- Never assume the reader knows what something is. Define it in one sentence before using it.
+- Short sentences. No filler words. No "it is worth noting that".
+- When something is genuinely uncertain or unknown, say so honestly. Don't fake confidence.
+
+### What goes where
+- **`docs/learning/`** — deep-dive explanations of concepts and systems. Full flow,
+  ELI10, diagrams, why things work the way they do. Written AFTER a feature is built.
+  One topic per file.
+- **`docs/learning/engineering-challenges.md`** — real bugs and hard problems encountered
+  while building. What happened, why it was tricky, what was considered, what was chosen.
+  Written for interview preparation.
+- **`docs/learning/README.md`** — index of all learning docs. One line per doc. Always
+  kept up to date when a new doc is added.
+- **`TODOS.md`** — prioritised feature backlog. Not a learning doc.
+- **`CLAUDE.md`** (this file) — instructions for Claude. Project context, conventions,
+  documentation philosophy. Updated when a new working convention is established.
+
+### What a good learning doc contains
+1. **The big picture first** — one paragraph on what this doc explains and why it matters
+2. **Plain English explanation** — no code yet, just concepts and analogies
+3. **ASCII diagrams** — use these liberally to show flows, relationships, before/after states
+4. **Code** — only after the concept is clear. Annotated with comments explaining the why.
+5. **The full flow** — step by step, from user action to server response and back
+6. **Rules / takeaways** — what to always do in future projects based on this learning
+7. **Honest uncertainties** — if something is unclear or unverified, say so explicitly
+
+### What a good learning doc does NOT contain
+- The specific bug story from this project — that goes in engineering-challenges.md
+- Marketing language or oversimplification that sacrifices accuracy
+- "It is important to note that" or any similar filler
+- Assumed knowledge without a one-line definition first
+
+### Diagrams
+Use ASCII diagrams for:
+- Before/after states of a bug fix
+- Data flow between systems (browser, cookie, Zustand store, Supabase server)
+- Step-by-step sequences (sign in flow, token refresh flow)
+
+Keep diagrams wide enough to be readable but don't overengineer them. A clear rough diagram
+beats a precise one that takes 10 minutes to parse.
+
+### When to write a learning doc
+After every meaningful new concept is introduced during a build session. If Sandeep asks
+"wait how does X work?" or "I didn't understand that" — that's the signal to write a doc.
+Don't wait until the end of the project. Write it while the context is fresh.

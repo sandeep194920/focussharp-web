@@ -154,6 +154,32 @@ Key concepts inside:
 
 ---
 
+## [07 — Mobile LCP Performance](./07-mobile-performance-lcp.md)
+
+**The big picture:** How a 6-second mobile LCP was diagnosed and fixed by splitting a client component into a static shell and a lazy-loaded interactive version.
+
+Key concepts inside:
+- What LCP is and why 2.5s is the threshold
+- Why `"use client"` components block the LCP
+- Static shell + `next/dynamic` lazy load pattern
+- PostHog deferred with `requestIdleCallback`
+
+---
+
+## [08 — Auth Token Refresh & Silent API Failures](./08-auth-token-refresh.md)
+
+**The big picture:** How a Supabase auth token expiry caused silent session data loss — and the right way to handle auth state in any Supabase app.
+
+Key concepts inside:
+- **Access token vs refresh token** — what each one is, how long they last, the wristband analogy
+- **Why the store and the token can go out of sync** — set once on load, never updated
+- **`onAuthStateChange`** — the listener that keeps store and auth state aligned, every event it fires for
+- **Silent `.catch(() => {})`** — why swallowing errors on writes causes invisible data loss
+- Rules to follow in every future Supabase app
+- How to test token expiry during development (set JWT to 60 seconds)
+
+---
+
 ## [Engineering Challenges](./engineering-challenges.md)
 
 **The big picture:** Real technical problems encountered while building FocusSharp — written for interview preparation.
@@ -162,6 +188,7 @@ Challenges documented:
 - **localStorage + Supabase sync conflict** — how default categories caused ghost data on every login, the three solutions considered, and why the final architectural decision (guests are stateless) was the right one
 - **Flash of Unstyled Content (FOUC) in dark mode** — why React hydration is too late for theme init and how a blocking inline script fixes it
 - **Timer accuracy with setInterval** — why tick-counting drifts and how wall-clock diffing solves it
+- **Silent session data loss (auth token expiry)** — how an expired Supabase token + silent error swallowing caused invisible data loss, and how `onAuthStateChange` fixes it
 
 ---
 

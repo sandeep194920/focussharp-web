@@ -105,6 +105,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         syncOnLogin();
       }
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED" && session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email ?? "",
+          displayName: session.user.user_metadata?.full_name ?? null,
+          avatarUrl: session.user.user_metadata?.avatar_url ?? null,
+        });
+      }
+      if (event === "SIGNED_OUT") {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [setUser, syncOnLogin]);
 
   return (

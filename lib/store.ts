@@ -560,7 +560,7 @@ export const useStore = create<AppState>()(
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(session),
-        }).catch(() => {/* silent */});
+        }).catch((err) => { console.error("[_pushSession]", err); });
       },
 
       _deleteRemoteCategory: (id) => {
