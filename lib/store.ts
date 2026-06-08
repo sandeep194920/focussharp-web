@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { track } from "./analytics";
 import posthog from "posthog-js";
+import * as Sentry from "@sentry/nextjs";
 
 export const CATEGORY_COLORS = [
   "#4f46e5", // indigo
@@ -552,7 +553,7 @@ export const useStore = create<AppState>()(
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: cat.id, name: cat.name, color: cat.color, createdAt: cat.createdAt }),
-        }).catch(() => {/* silent */});
+        }).catch((err) => { console.error("[_pushCategory]", err); Sentry.captureException(err); });
       },
 
       _pushSession: (session) => {
@@ -560,12 +561,12 @@ export const useStore = create<AppState>()(
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(session),
-        }).catch((err) => { console.error("[_pushSession]", err); });
+        }).catch((err) => { console.error("[_pushSession]", err); Sentry.captureException(err); });
       },
 
       _deleteRemoteCategory: (id) => {
         fetch(`/api/categories?id=${encodeURIComponent(id)}`, { method: "DELETE" })
-          .catch(() => {/* silent */});
+          .catch((err) => { console.error("[_deleteRemoteCategory]", err); Sentry.captureException(err); });
       },
     }),
     {

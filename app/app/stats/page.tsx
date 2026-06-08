@@ -40,7 +40,7 @@ const BAR_DAYS: Record<Period, number> = {
 // AD_SLOT: replace with AdSense code when approved (stats sidebar, desktop only)
 
 export default function StatsPage() {
-  const { sessions, categories, isPro, user, openAuthModal } = useStore();
+  const { sessions, categories, isPro, user, isSyncing, openAuthModal } = useStore();
   const [period, setPeriod] = useState<Period>("today");
 
   const filtered = filterSessionsByPeriod(sessions, period, isPro);
@@ -62,6 +62,20 @@ export default function StatsPage() {
   }));
 
   const isEmpty = filtered.length === 0;
+
+  if (isSyncing) {
+    return (
+      <div className="flex flex-col gap-5 animate-pulse">
+        <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+        <div className="h-10 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="card p-4 h-20 bg-gray-100 dark:bg-gray-800" />
+          <div className="card p-4 h-20 bg-gray-100 dark:bg-gray-800" />
+        </div>
+        <div className="card p-4 h-40 bg-gray-100 dark:bg-gray-800" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-5">

@@ -5,7 +5,7 @@ import { useStore, CATEGORY_COLORS, FREE_CATEGORY_LIMIT } from "@/lib/store";
 import Link from "next/link";
 
 export default function CategoriesPage() {
-  const { categories, isPro, user, addCategory, updateCategory, deleteCategory, openAuthModal } =
+  const { categories, isPro, user, isSyncing, addCategory, updateCategory, deleteCategory, openAuthModal } =
     useStore();
 
   const [showForm, setShowForm] = useState(false);
