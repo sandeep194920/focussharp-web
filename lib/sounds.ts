@@ -45,18 +45,18 @@ function playTone(
   };
 }
 
-// Three-tone ascending chime — played when a focus session ends
+// Repeating two-tone pulse x4, one pulse every 2s (~8s total) — played when a focus session ends
 export function playSessionEndSound() {
-  playTone(523.25, 0.18, 0.6);
-  playTone(659.25, 0.15, 0.5, "sine", 0.22);
-  playTone(783.99, 0.12, 0.8, "sine", 0.44);
-}
-
-// Repeating two-tone pulse x4, one pulse every 2s (~8s total) — played when a break ends
-export function playBreakEndSound() {
   for (let i = 0; i < 4; i++) {
     const offset = i * 2;
     playTone(880,    0.14, 0.4, "sine", offset);
     playTone(1046.5, 0.10, 0.5, "sine", offset + 0.25);
   }
+}
+
+// Three-tone ascending chime — played when a break ends
+export function playBreakEndSound() {
+  playTone(523.25, 0.18, 0.6);
+  playTone(659.25, 0.15, 0.5, "sine", 0.22);
+  playTone(783.99, 0.12, 0.8, "sine", 0.44);
 }

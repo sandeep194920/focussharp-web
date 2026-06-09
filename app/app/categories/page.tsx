@@ -50,6 +50,26 @@ export default function CategoriesPage() {
     setConfirmDelete(null);
   };
 
+  if (isSyncing) {
+    return (
+      <div className="flex flex-col gap-5 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-1.5">
+            <div className="h-7 w-28 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+            <div className="h-4 w-36 bg-gray-100 dark:bg-gray-800 rounded-lg" />
+          </div>
+          <div className="h-9 w-16 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+        </div>
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="card p-4 flex items-center gap-3 h-16">
+            <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex-shrink-0" />
+            <div className="h-4 flex-1 bg-gray-100 dark:bg-gray-800 rounded-lg" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5">
       {/* Header */}

@@ -15,6 +15,7 @@ export default function AppPage() {
     categories,
     timer,
     isPro,
+    isSyncing,
     soundEnabled,
     setActiveCat,
     setTimerDuration,
@@ -264,7 +265,7 @@ export default function AppPage() {
         <div className="card p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="label-sm">Category</p>
-            {timer.phase === "idle" && (
+            {timer.phase === "idle" && !isSyncing && (
               <Link
                 href="/app/categories"
                 className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
@@ -273,7 +274,13 @@ export default function AppPage() {
               </Link>
             )}
           </div>
-          {categories.length === 0 ? (
+          {isSyncing ? (
+            <div className="flex flex-col gap-1 animate-pulse">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-10 rounded-xl bg-gray-100 dark:bg-gray-800" />
+              ))}
+            </div>
+          ) : categories.length === 0 ? (
             <Link
               href="/app/categories"
               className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"

@@ -77,7 +77,7 @@ function AuthParamHandler() {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { setUser, syncOnLogin } = useStore();
+  const { setUser, syncOnLogin, setIsSyncing } = useStore();
 
   useEffect(() => {
     // One-time cleanup: remove legacy persisted categories/sessions from localStorage
@@ -103,6 +103,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           avatarUrl: session.user.user_metadata?.avatar_url ?? null,
         });
         syncOnLogin();
+      } else {
+        setIsSyncing(false);
       }
     });
 

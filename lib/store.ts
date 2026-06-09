@@ -111,6 +111,7 @@ interface AppState {
 
   // Auth actions
   setUser: (user: AuthUser | null) => void;
+  setIsSyncing: (val: boolean) => void;
   setIsPro: (val: boolean) => void;
   openAuthModal: (mode: "sign-in" | "sign-up") => void;
   closeAuthModal: () => void;
@@ -159,7 +160,7 @@ export const useStore = create<AppState>()(
 
       // Auth state (not persisted)
       user: null,
-      isSyncing: false,
+      isSyncing: true,
       authModal: "closed",
 
       addCategory: (name, color) => {
@@ -494,6 +495,8 @@ export const useStore = create<AppState>()(
 
       // Auth actions
       setUser: (user) => set({ user }),
+
+      setIsSyncing: (val) => set({ isSyncing: val }),
 
       setIsPro: (val) => set({ isPro: val }),
 
