@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import * as Sentry from "@sentry/nextjs";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
     to: "sandeepamarnath@staarsolutions.ca",
     subject: `New waitlist signup — ${email}`,
     html: `<p><strong>${email}</strong> just joined the waitlist${source ? ` from <strong>${source}</strong>` : ""}.</p>`,
-  }).catch(() => { /* don't fail the request if email fails */ });
+  }).catch((err) => { console.error("[waitlist] founder notify failed", err); Sentry.captureException(err); });
 
   return NextResponse.json({ ok: true });
 }

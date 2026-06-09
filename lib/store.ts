@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { track } from "./analytics";
 import posthog from "posthog-js";
+import * as Sentry from "@sentry/nextjs";
 
 export const CATEGORY_COLORS = [
   "#4f46e5", // indigo
@@ -110,6 +111,7 @@ interface AppState {
 
   // Auth actions
   setUser: (user: AuthUser | null) => void;
+  setIsSyncing: (val: boolean) => void;
   setIsPro: (val: boolean) => void;
   openAuthModal: (mode: "sign-in" | "sign-up") => void;
   closeAuthModal: () => void;
@@ -158,7 +160,7 @@ export const useStore = create<AppState>()(
 
       // Auth state (not persisted)
       user: null,
-      isSyncing: false,
+      isSyncing: true,
       authModal: "closed",
 
       addCategory: (name, color) => {
@@ -494,6 +496,8 @@ export const useStore = create<AppState>()(
       // Auth actions
       setUser: (user) => set({ user }),
 
+      setIsSyncing: (val) => set({ isSyncing: val }),
+
       setIsPro: (val) => set({ isPro: val }),
 
       openAuthModal: (mode) => set({ authModal: mode }),
@@ -552,7 +556,7 @@ export const useStore = create<AppState>()(
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: cat.id, name: cat.name, color: cat.color, createdAt: cat.createdAt }),
-        }).catch(() => {/* silent */});
+        }).catch((err) => { console.error("[_pushCategory]", err); Sentry.captureException(err); });
       },
 
       _pushSession: (session) => {
@@ -560,12 +564,12 @@ export const useStore = create<AppState>()(
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(session),
-        }).catch(() => {/* silent */});
+        }).catch((err) => { console.error("[_pushSession]", err); Sentry.captureException(err); });
       },
 
       _deleteRemoteCategory: (id) => {
         fetch(`/api/categories?id=${encodeURIComponent(id)}`, { method: "DELETE" })
-          .catch(() => {/* silent */});
+          .catch((err) => { console.error("[_deleteRemoteCategory]", err); Sentry.captureException(err); });
       },
     }),
     {

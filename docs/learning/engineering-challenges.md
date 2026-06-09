@@ -287,3 +287,187 @@ Also consolidated `PostHogPageView` (which was in a separate file and wrapped in
 JavaScript ran — that caused a 6-second LCP on mobile. I split it into a static server-rendered
 SVG shell that paints immediately, and a lazy-loaded interactive version that hydrates silently
 in the background. That dropped the LCP element from JS-dependent to HTML-dependent."*
+
+---
+
+## 5. Silent Session Data Loss — Expired Auth Token + Fire-and-Forget API Calls
+
+### The problem
+Users (including me) completed focus sessions that never appeared in the stats page. The sessions
+looked like they completed normally — the timer rang, the UI moved to the break screen — but
+nothing was saved to the database. No error was shown anywhere.
+
+### Why it was tricky
+Three separate issues combined to make this completely invisible:
+
+1. **No `onAuthStateChange` listener.** Supabase auth tokens have an expiry. The Supabase client
+   refreshes them automatically in the background — but only if something is listening for the
+   `TOKEN_REFRESHED` event and updating the app's auth state accordingly. Without a listener,
+   the token would silently expire mid-session. The API would start returning 401s, but the UI
+   still showed the user as logged in because the store's `user` object was never cleared.
+
+2. **Fire-and-forget with silent catch.** The `_pushSession` function that POSTs sessions to the
+   API used `.catch(() => {/* silent */})`. Any failure — 401, network error, Supabase down —
+   was swallowed completely. No log, no retry, no user feedback.
+
+3. **No retry or queue.** Once a session POST failed, it was gone. There was no pending queue,
+   no localStorage fallback for logged-in users, nothing.
+
+```ts
+// Before — silent failure
+_pushSession: (session) => {
+  fetch("/api/sessions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(session),
+  }).catch(() => {/* silent */}); // <-- swallows 401s, network errors, everything
+},
+```
+
+### The fix
+
+**1. Added `onAuthStateChange` listener in the app layout.**
+
+First, some context on how Supabase tokens work:
+
+When you sign in, Supabase gives your browser two things:
+- An **access token** — proves you're logged in. Expires after 1 hour.
+- A **refresh token** — used only to get a new access token when the old one expires.
+
+After 1 hour, the Supabase client automatically uses the refresh token to silently get a new
+access token. You never see this happen. But our app's store (which holds the `user` object)
+had no idea this was happening — it was set once on page load and never updated.
+
+So the situation was:
+- 0 min: You sign in. Store has `user`. Token is valid. Writes work.
+- 60 min: Token expires. Supabase gets a new one silently.
+- 61 min: You complete a session. The store still has `user` so the code tries to save.
+  But the API is now using a stale cookie — it returns 401. Session is dropped silently.
+
+The fix is `onAuthStateChange` — a listener that Supabase calls every time auth state changes:
+token refreshed, token expired, user signed out. We use it to keep the store's user in sync
+with what Supabase actually knows.
+
+```ts
+const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+  if (event === "TOKEN_REFRESHED" && session?.user) {
+    // Supabase just got a new token — update the store to match
+    setUser({ id: session.user.id, email: session.user.email ?? "", ... });
+  }
+  if (event === "SIGNED_OUT") {
+    // Token expired and couldn't be refreshed — clear the user from the store
+    // so the UI reflects reality (user is no longer authenticated)
+    setUser(null);
+  }
+});
+return () => subscription.unsubscribe(); // clean up when component unmounts
+```
+
+**2. Replaced silent catch with console.error:**
+
+```ts
+_pushSession: (session) => {
+  fetch("/api/sessions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(session),
+  }).catch((err) => { console.error("[_pushSession]", err); });
+},
+```
+
+At minimum, failures are now visible in DevTools and captured by Sentry.
+
+### What I learned
+- **Always listen to `onAuthStateChange`.** A Supabase app without it is broken by design —
+  tokens expire and the client has no way to know unless something is listening.
+- **Silent catches are data loss waiting to happen.** `.catch(() => {})` on a write operation
+  is almost never correct. At minimum log the error. For critical data, queue and retry.
+- **"Logged in" in the UI ≠ "auth token is valid."** The store holds a user object in memory.
+  The token is a separate thing that lives in a cookie. They can go out of sync. The listener
+  keeps them in sync.
+- **Test auth expiry explicitly.** In development, manually expire the token (clear the cookie,
+  or shorten the JWT expiry in Supabase settings) and verify writes still work.
+
+### How to explain in an interview
+*"I had a bug where completed focus sessions were silently not saving to the database. The UI
+showed the user as logged in, sessions appeared to complete normally, but nothing appeared in
+the stats. The root cause was two things: I had no `onAuthStateChange` listener, so when the
+Supabase auth token expired mid-session, the API started returning 401s but the UI had no idea.
+And the API call used `.catch(() => {})`, so every 401 was swallowed silently.*
+
+*The fix was to add the auth state listener so token refreshes keep the store in sync, and to
+replace silent catches with proper error logging. The broader lesson: for any write operation
+that matters, never swallow errors — at minimum log them. For critical data like session records,
+the right pattern is to queue failed writes and retry rather than drop them."*
+
+---
+
+## 6. Sessions Still Not Saving — The Real Bug Was Missing Database Columns
+
+### The problem
+After fixing the auth listener in challenge 5, sessions were still not saving to the database.
+Same symptom: timer completed, "Session complete" showed on screen, but nothing in the stats
+and nothing in the Supabase table.
+
+### The investigation
+Opening DevTools → Network tab and completing a session revealed the POST to `/api/sessions`
+was firing and returning **500**. The error response from Supabase:
+
+```
+Could not find the 'cat_color' column of 'sessions' in the schema cache
+```
+
+### Why it happened
+The `sessions` table was created early in the project by manually clicking through the
+Supabase dashboard Table Editor. At that point, the schema only had the basic columns:
+`id`, `user_id`, `cat_id`, `duration_mins`, `completed_at`, `note`.
+
+Later, the app code was updated to store richer session data — `cat_name`, `cat_color`,
+`started_at`, `completed`, `type` — but the database schema was never updated to match.
+The migration file also didn't reflect the real prod schema because the table was created
+manually, not through a migration.
+
+### Why it was invisible
+The `.catch(() => {})` on `_pushSession` swallowed the 500 error completely. No console
+log, no UI feedback, nothing. The session appeared to complete from the user's perspective
+but the database was silently rejecting every insert.
+
+### The fix
+Ran this directly in the Supabase prod SQL Editor:
+
+```sql
+alter table public.sessions
+  add column cat_name   text,
+  add column cat_color  text,
+  add column started_at bigint,
+  add column completed  boolean not null default true,
+  add column type       text    not null default 'focus';
+```
+
+Sessions started saving immediately.
+
+### What I learned
+- **Silent catches hide the real bug.** We spent time investigating auth token expiry
+  because `.catch(() => {})` gave us zero signal. The actual error was a simple missing
+  column. If it had logged the error, this would have been a 2-minute fix.
+- **Manual schema changes in the dashboard don't create migration files.** Any change
+  made through the Supabase Table Editor or dashboard bypasses the migrations system.
+  Always use `supabase migration new` + SQL, never the dashboard UI for schema changes.
+- **Dev and prod schemas can silently diverge.** If prod was set up manually and dev
+  uses migrations, they will drift. The only source of truth is what's actually in the
+  prod database — verify with the Table Editor when debugging unexpected API errors.
+- **Always check the Network tab first.** Before theorising about root causes, open
+  DevTools, reproduce the bug, and read the actual error response. The answer is usually
+  right there.
+
+### How to explain in an interview
+*"I had a bug where focus sessions weren't saving. I initially suspected an auth token
+issue — there was no `onAuthStateChange` listener which is a real problem — but sessions
+were still failing after fixing that. Opening the Network tab showed the POST was returning
+500 with 'Could not find the cat_color column'. The prod database schema was missing several
+columns because the table had been created manually through the Supabase dashboard early in
+the project, and the schema was never updated when the app code evolved.*
+
+*The fix was a one-line ALTER TABLE. But the real lesson was that a silent `.catch(() => {})`
+on the API call had hidden this error completely — we were debugging auth theory when the
+answer was sitting in the network response the whole time. Never swallow errors on writes."*
