@@ -272,6 +272,22 @@ export const useStore = create<AppState>()(
         const elapsed = Math.floor((Date.now() - timer.sessionStart) / 1000);
         const newSecs = Math.max(0, timer.totalSecs - elapsed);
         if (newSecs <= 0) {
+          // Guard against double-logging if another tab's tick completes the same
+          // session first (both tabs tick the same persisted sessionStart).
+          // localStorage can throw (e.g. Safari private browsing, restricted
+          // storage contexts) — fall back to single-tab behaviour if so.
+          const dedupeKey = `focussharp-session-completed-${timer.sessionStart}`;
+          try {
+            if (localStorage.getItem(dedupeKey)) {
+              set((s) => ({
+                timer: { ...s.timer, phase: "break", secsLeft: 0, breakSecsLeft: 0, breakType: null },
+              }));
+              return;
+            }
+            localStorage.setItem(dedupeKey, "1");
+          } catch {
+            /* localStorage unavailable — proceed without dedupe */
+          }
           const cat = categories.find((c) => c.id === timer.activeCatId);
           if (cat && timer.sessionStart) {
             addSession({
@@ -574,12 +590,24 @@ export const useStore = create<AppState>()(
     }),
     {
       name: "focussharp-storage",
+      version: 1,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
         isPro: s.isPro,
         theme: s.theme,
         soundEnabled: s.soundEnabled,
+        timer: s.timer,
       }),
     }
   )
 );
+
+// Cross-tab sync: when another tab writes to the persisted store (e.g. starts/ticks
+// a session), rehydrate this tab's state from localStorage so all tabs in the same
+// browser reflect one shared active session.
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key !== "focussharp-storage" || !e.newValue) return;
+    useStore.persist.rehydrate();
+  });
+}

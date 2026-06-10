@@ -471,3 +471,113 @@ the project, and the schema was never updated when the app code evolved.*
 *The fix was a one-line ALTER TABLE. But the real lesson was that a silent `.catch(() => {})`
 on the API call had hidden this error completely — we were debugging auth theory when the
 answer was sitting in the network response the whole time. Never swallow errors on writes."*
+
+---
+
+## 7. "Works on Mac, Crashes on Phone" — Unguarded localStorage Call Crashed the Whole App
+
+### The problem
+After adding two improvements to the timer — (1) catching up the countdown immediately on
+mount instead of waiting up to 1 second for the first tick, and (2) a cross-tab dedupe guard
+so two open tabs don't both log the same completed session — the app worked perfectly on
+desktop Chrome and Safari. On an iPhone, opening `focussharp.app` showed:
+
+```
+Application error: a client-side exception has occurred
+(see the browser console for more information)
+```
+
+A full white screen. Nothing rendered, not even the navbar.
+
+### Why it happened
+The dedupe guard added a direct `localStorage.getItem` / `localStorage.setItem` call inside
+`tickTimer()`:
+
+```ts
+const dedupeKey = `focussharp-session-completed-${timer.sessionStart}`;
+if (localStorage.getItem(dedupeKey)) { ... }
+localStorage.setItem(dedupeKey, "1");
+```
+
+Separately, the timer page was changed to call `tickTimer()` **immediately on mount** if the
+persisted timer state says a session is already running (so reopening the app mid-session
+doesn't show a stale time for up to a second):
+
+```ts
+useEffect(() => {
+  if (timer.phase === "running") {
+    tickTimerRef.current(); // <-- runs synchronously on first render
+    intervalRef.current = setInterval(() => tickTimerRef.current(), 1000);
+  }
+  ...
+}, [timer.phase, timer.breakType]);
+```
+
+Put together: **as soon as the app loads with a running session restored from localStorage,
+`tickTimer()` fires during the very first `useEffect`, which calls `localStorage.setItem`
+synchronously.**
+
+On desktop this is harmless — `localStorage` is always available. But on iPhone Safari,
+`localStorage` access can throw a `SecurityError` or `QuotaExceededError` in certain
+contexts: Private Browsing mode (older iOS versions), low-storage devices, or webviews with
+storage restrictions (e.g. opening a link from another app). When `localStorage.setItem`
+throws inside a `useEffect` on first render, React has no error boundary around it — the
+whole component tree unmounts and Next.js shows the generic "Application error: a
+client-side exception has occurred" white screen.
+
+### Why it was tricky
+Both changes were correct and tested individually. Neither one *looks* dangerous in
+isolation — `localStorage` "always works" is a habit from years of desktop-first
+development. The bug only appears when **all three conditions line up**: (1) a session is
+actively running and persisted, (2) the page is reloaded/reopened so the mount-time tick
+fires, and (3) the browser's storage is restricted. None of these are visible from reading
+either diff alone — only from tracing the data flow from "tab opens" → "effect fires" →
+"store action runs" → "raw browser API call."
+
+### The fix
+Wrap the localStorage dedupe check in try/catch and fall back to normal (non-deduped)
+completion if storage isn't available:
+
+```ts
+try {
+  if (localStorage.getItem(dedupeKey)) {
+    set((s) => ({ timer: { ...s.timer, phase: "break", ... } }));
+    return;
+  }
+  localStorage.setItem(dedupeKey, "1");
+} catch {
+  // localStorage unavailable — proceed without dedupe
+}
+```
+
+Losing the cross-tab dedupe in the rare case storage is blocked is a fine tradeoff — a
+duplicate session log is far better than a fully broken app.
+
+### What I learned
+- **Any `localStorage`/`sessionStorage` call outside of Zustand's `persist` middleware needs
+  a try/catch.** `persist` already handles storage errors internally; raw calls added to
+  store actions do not.
+- **Code that runs during the first `useEffect` on mount is the highest-risk place for this
+  kind of bug.** There's no error boundary yet, the user hasn't interacted with anything,
+  and a thrown error there takes down the entire page — not just one feature.
+- **"Works on my machine" for browser APIs often really means "works on desktop."** Mobile
+  Safari (especially Private Browsing, low storage, or in-app webviews like Instagram/Slack
+  browsers) has meaningfully different storage availability than desktop Chrome/Safari.
+  Always test storage-touching changes on a phone before shipping.
+- **Two small, individually-correct changes can combine into a crash.** Reviewing each diff
+  in isolation wouldn't have caught this — the bug only exists at the intersection of "tick
+  on mount" and "tick writes to localStorage."
+
+### How to explain in an interview
+*"I shipped two small timer improvements — instant catch-up on mount, and a cross-tab
+dedupe using localStorage — and the app started crashing completely on iPhone while working
+fine on desktop. The root cause was that the dedupe check called `localStorage.setItem`
+directly, with no try/catch, and the 'tick on mount' change meant this now ran synchronously
+during the first render whenever a session was already in progress. On Safari, localStorage
+can throw in restricted contexts like Private Browsing — and an uncaught throw during the
+first `useEffect` has no error boundary, so it crashes the entire app to a white screen.*
+
+*The fix was a simple try/catch with a graceful fallback. The bigger lesson was that any raw
+browser storage API call needs defensive handling, especially in code paths that run on
+mount before the user has done anything — and that mobile Safari's storage behaviour is
+genuinely different from desktop, not just slower."*
