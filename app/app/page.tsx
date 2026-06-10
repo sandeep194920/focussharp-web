@@ -75,10 +75,14 @@ export default function AppPage() {
 
   useEffect(() => {
     if (timer.phase === "running") {
+      // Catch up immediately on mount/rehydrate (e.g. reopening a tab mid-session)
+      // instead of waiting up to 1s for the first tick.
+      tickTimerRef.current();
       intervalRef.current = setInterval(() => tickTimerRef.current(), 1000);
     } else if (timer.phase === "open-running") {
       intervalRef.current = setInterval(() => tickOpenRef.current(), 1000);
     } else if (timer.phase === "break" && timer.breakType === "timed") {
+      tickBreakRef.current();
       intervalRef.current = setInterval(() => tickBreakRef.current(), 1000);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);

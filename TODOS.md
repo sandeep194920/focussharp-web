@@ -118,8 +118,17 @@
       and webhook endpoints.
 - [ ] **Error boundary** — wrap the `/app` timer in a React error boundary so a JS
       error doesn't lose an in-progress session.
-- [ ] **Session recovery** — if the user closes the tab mid-session, restore the elapsed
-      time on next open (store `sessionStart` timestamp in localStorage separately).
+- [x] **Session recovery** — done. The `timer` slice (including `sessionStart`/
+      `breakStart`) is now persisted to localStorage and rehydrated via a cross-tab
+      `storage` event listener (`lib/store.ts`), so reopening/reloading a tab
+      mid-session recomputes elapsed time immediately and all tabs in the same
+      browser share one active session (a second tab no longer starts a duplicate).
+- [ ] **`tickOpenSession` timestamp-based recompute** — unlike `tickTimer`/`tickBreak`,
+      `tickOpenSession` increments `secsElapsed` by a flat `+1` per tick instead of
+      recomputing from `sessionStart`. Causes ~1s undercount per pause/resume cycle
+      and means a freshly reopened tab during a flow session is briefly stale until
+      the next tick. Low priority/cosmetic — align with the timestamp-based pattern
+      (would need a `secsElapsedBase` field set on start/resume).
 - [ ] **Content Security Policy header** — add a strict CSP once AdSense is integrated
       (AdSense requires `unsafe-inline` for scripts — plan accordingly).
 
