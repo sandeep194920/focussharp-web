@@ -189,7 +189,8 @@ Challenges documented:
 - **Flash of Unstyled Content (FOUC) in dark mode** — why React hydration is too late for theme init and how a blocking inline script fixes it
 - **Timer accuracy with setInterval** — why tick-counting drifts and how wall-clock diffing solves it
 - **Silent session data loss (auth token expiry)** — how an expired Supabase token + silent error swallowing caused invisible data loss, and how `onAuthStateChange` fixes it
-- **Unguarded localStorage call crashed the app on mobile** — how a "tick on mount" change + a raw `localStorage` call combined to crash the entire app on iPhone Safari while working fine on desktop
+- **Unguarded localStorage call (defensive fix, not the root cause)** — a "tick on mount" change + a raw `localStorage` call needed a try/catch, but turned out not to be why the app crashed
+- **The real white-screen cause: `requestIdleCallback` doesn't exist in Safari** — how a missing-API `ReferenceError` in the PostHog provider crashed the entire app on Safari (Mac and iPhone), found via the Safari Web Inspector over USB
 
 ---
 
