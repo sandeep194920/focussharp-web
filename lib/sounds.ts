@@ -2,9 +2,15 @@
 let ctx: AudioContext | null = null;
 const activeOscillators: OscillatorNode[] = [];
 
-function getCtx(): AudioContext {
-  if (!ctx) ctx = new AudioContext();
-  return ctx;
+function getCtx(): AudioContext | null {
+  try {
+    if (!ctx) ctx = new AudioContext();
+    return ctx;
+  } catch {
+    // AudioContext unavailable (e.g. iOS Safari restrictions before any
+    // user gesture, or when the page has hit the browser's context limit).
+    return null;
+  }
 }
 
 export function stopAllSounds() {
@@ -22,27 +28,34 @@ function playTone(
   delay = 0
 ) {
   const ac = getCtx();
-  const osc = ac.createOscillator();
-  const gain = ac.createGain();
+  if (!ac) return;
 
-  osc.connect(gain);
-  gain.connect(ac.destination);
+  try {
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
 
-  osc.type = type;
-  osc.frequency.setValueAtTime(frequency, ac.currentTime + delay);
+    osc.connect(gain);
+    gain.connect(ac.destination);
 
-  gain.gain.setValueAtTime(0, ac.currentTime + delay);
-  gain.gain.linearRampToValueAtTime(gainPeak, ac.currentTime + delay + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + delay + duration);
+    osc.type = type;
+    osc.frequency.setValueAtTime(frequency, ac.currentTime + delay);
 
-  osc.start(ac.currentTime + delay);
-  osc.stop(ac.currentTime + delay + duration + 0.05);
+    gain.gain.setValueAtTime(0, ac.currentTime + delay);
+    gain.gain.linearRampToValueAtTime(gainPeak, ac.currentTime + delay + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + delay + duration);
 
-  activeOscillators.push(osc);
-  osc.onended = () => {
-    const idx = activeOscillators.indexOf(osc);
-    if (idx !== -1) activeOscillators.splice(idx, 1);
-  };
+    osc.start(ac.currentTime + delay);
+    osc.stop(ac.currentTime + delay + duration + 0.05);
+
+    activeOscillators.push(osc);
+    osc.onended = () => {
+      const idx = activeOscillators.indexOf(osc);
+      if (idx !== -1) activeOscillators.splice(idx, 1);
+    };
+  } catch {
+    // Playback can fail on some mobile browsers (e.g. iOS Safari without a
+    // prior user gesture) — fail silently rather than crash the app.
+  }
 }
 
 // Repeating two-tone pulse x4, one pulse every 2s (~8s total) — played when a focus session ends

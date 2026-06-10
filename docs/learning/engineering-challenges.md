@@ -581,3 +581,104 @@ first `useEffect` has no error boundary, so it crashes the entire app to a white
 browser storage API call needs defensive handling, especially in code paths that run on
 mount before the user has done anything — and that mobile Safari's storage behaviour is
 genuinely different from desktop, not just slower."*
+
+> **Update:** the try/catch above was a real (and worth-keeping) defensive fix, but it
+> turned out **not** to be the cause of the white screen. See Challenge 8 for the actual
+> root cause, found by connecting the iPhone to Safari's Web Inspector.
+
+---
+
+## 8. The Real White-Screen Cause — `requestIdleCallback` Doesn't Exist on Safari
+
+### The problem
+Challenge 7 documented a plausible theory (unguarded `localStorage` call) and fixed it —
+but the white screen on `focussharp.app` persisted on iPhone afterwards. "Works on Mac,
+crashes on phone" was also slightly misleading: it actually meant **works on Mac Chrome,
+crashes on Safari (both iPhone and Mac Safari)** — the person testing just hadn't tried Mac
+Safari.
+
+### How it was found
+Plugging the iPhone into a Mac via USB and opening Safari's **Web Inspector**
+(Settings → Safari → Advanced → Web Inspector, then Mac Safari → Develop → [device name])
+gave a real console with the actual error:
+
+```
+ReferenceError: Can't find variable: requestIdleCallback
+```
+
+### Why it happened
+`components/providers/PostHogProvider.tsx` deferred PostHog initialisation using
+`requestIdleCallback` (added back in the mobile LCP performance work, Challenge "07 — Mobile
+LCP"):
+
+```ts
+useEffect(() => {
+  if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return
+  const id = requestIdleCallback(() => {
+    posthog.init(...)
+    setReady(true)
+  }, { timeout: 3000 })
+  return () => cancelIdleCallback(id)
+}, [])
+```
+
+`requestIdleCallback` / `cancelIdleCallback` are **not implemented in any version of
+Safari** — desktop or iOS — only in Chromium-based browsers and Firefox. The moment this
+`useEffect` ran, `requestIdleCallback` was `undefined`, calling it threw a `ReferenceError`,
+and — same as Challenge 7 — an uncaught throw inside a `useEffect` with no error boundary
+takes down the entire React tree to Next.js's generic white screen.
+
+### Why it was tricky
+- The bug had been live since the mobile LCP performance commit, but nobody had loaded the
+  site in **any** Safari (Mac or iPhone) since then — only Chrome, where
+  `requestIdleCallback` exists and everything works.
+- The error message ("Application error: a client-side exception has occurred") gives zero
+  hint about *which* API is missing. Without the real console output, every theory (storage,
+  audio, hydration mismatch) was equally plausible.
+- This is the **opposite** of a progressive-enhancement bug — usually missing browser APIs
+  degrade gracefully if you check for them. Here the missing API was called unconditionally,
+  so there was no graceful path at all.
+
+### The fix
+Feature-detect `requestIdleCallback` and fall back to `setTimeout` on browsers that don't
+have it (i.e. Safari):
+
+```ts
+if (typeof requestIdleCallback === 'function') {
+  const id = requestIdleCallback(init, { timeout: 3000 })
+  return () => cancelIdleCallback(id)
+} else {
+  const id = setTimeout(init, 1000)
+  return () => clearTimeout(id)
+}
+```
+
+### What I learned
+- **`requestIdleCallback` is a Chromium/Firefox-only API.** Safari (Mac and iOS) has never
+  implemented it. Any use of it needs a `setTimeout` fallback — there is no exception.
+- **"Works on Mac" needs to mean "works on Mac Safari," not "works on Mac Chrome."** Chrome
+  and Safari support meaningfully different web platform APIs. Test the *engine*
+  (WebKit/Chromium/Gecko), not the OS.
+- **The Safari Web Inspector (via USB from a Mac) is the fastest way to debug an iPhone
+  white screen.** The on-device "Application error" message is useless on its own —
+  `Settings → Safari → Advanced → Web Inspector`, then `Mac Safari → Develop → [device]`
+  gives a full console, network tab, and source debugger for the live page on the phone.
+- **An uncaught error in any top-level `useEffect` (analytics, providers, anything) can
+  white-screen the entire app**, not just the feature it belongs to. Provider/analytics code
+  that runs on every page load is exactly where a defensive feature-detect or try/catch
+  matters most — a broken analytics init shouldn't be able to take down the whole product.
+
+### How to explain in an interview
+*"The site threw a generic 'client-side exception' white screen on every Safari browser —
+iPhone and Mac — but worked fine in Chrome. The error message gave no detail, so I connected
+the iPhone to a Mac via Safari's Web Inspector to get the real console output, which showed
+`ReferenceError: Can't find variable: requestIdleCallback`. That API — used to defer
+analytics initialisation until the browser was idle — simply doesn't exist in WebKit/Safari.
+Calling an undefined global threw inside a `useEffect`, and with no error boundary that
+crashed the entire React tree.*
+
+*The fix was a one-line feature detect with a `setTimeout` fallback. The bigger lesson: when
+a bug is described as 'works on Mac, broken on phone,' check whether it's really an OS
+difference or a *browser engine* difference — and get a real console (Safari Web Inspector
+over USB) before forming theories, because the generic Next.js error page hides the actual
+exception completely."*
