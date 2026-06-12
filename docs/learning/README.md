@@ -191,6 +191,7 @@ Challenges documented:
 - **Silent session data loss (auth token expiry)** — how an expired Supabase token + silent error swallowing caused invisible data loss, and how `onAuthStateChange` fixes it
 - **Unguarded localStorage call (defensive fix, not the root cause)** — a "tick on mount" change + a raw `localStorage` call needed a try/catch, but turned out not to be why the app crashed
 - **The real white-screen cause: `requestIdleCallback` doesn't exist in Safari** — how a missing-API `ReferenceError` in the PostHog provider crashed the entire app on Safari (Mac and iPhone), found via the Safari Web Inspector over USB
+- **Timer "stops" on phone lock, but not on Mac** — why wall-clock time math alone isn't enough, and how a `visibilitychange` listener fixes the display after mobile Safari suspends the page
 
 ---
 
