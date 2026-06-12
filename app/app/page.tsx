@@ -92,6 +92,23 @@ export default function AppPage() {
     };
   }, [timer.phase, timer.breakType]);
 
+  // Mobile browsers throttle or suspend setInterval while the tab/screen is
+  // backgrounded. tickTimer and tickBreak compute elapsed time from a stored
+  // Date.now() timestamp, so re-running them on return catches the display up
+  // to the real elapsed time instead of leaving it frozen.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      if (timer.phase === "running") {
+        tickTimerRef.current();
+      } else if (timer.phase === "break" && timer.breakType === "timed") {
+        tickBreakRef.current();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [timer.phase, timer.breakType]);
+
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [confirmEndOpen, setConfirmEndOpen] = useState(false);
   const [breakJustEnded, setBreakJustEnded] = useState(false);

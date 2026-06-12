@@ -682,3 +682,115 @@ a bug is described as 'works on Mac, broken on phone,' check whether it's really
 difference or a *browser engine* difference — and get a real console (Safari Web Inspector
 over USB) before forming theories, because the generic Next.js error page hides the actual
 exception completely."*
+
+---
+
+## 9. Timer "Stops" on Phone Lock, But Not on Mac
+
+### The problem
+Locking the phone (or switching apps) while a focus session is running on
+`focussharp.app` made the on-screen timer appear frozen when the phone was unlocked again.
+The same thing — leaving the tab in the background — never caused this on Mac. The timer
+would just keep ticking normally on desktop, even in a background tab.
+
+### Why it wasn't a logic bug
+Challenge 3 already established that `tickTimer()` and `tickBreak()` don't trust the tick
+count — they recompute elapsed time from a stored timestamp:
+
+```ts
+tickTimer: () => {
+  const elapsed = Math.floor((Date.now() - timer.sessionStart) / 1000);
+  const newSecs = Math.max(0, timer.totalSecs - elapsed);
+  ...
+}
+```
+
+So the *math* was already correct and self-healing. `Date.now() - sessionStart` is true
+regardless of how long the tab was suspended. The bug wasn't in the calculation — it was
+that **nothing was re-running the calculation** when the page came back.
+
+### Why mobile and desktop behave differently
+Both platforms throttle `setInterval` in background tabs to save battery/CPU — that part is
+the same. The difference is *how aggressively*:
+
+- **Mac (Chrome/Safari):** a background tab keeps its JavaScript "alive." `setInterval`
+  may be throttled to roughly once per second still, or briefly delayed, but the page
+  itself is never torn down. When you switch back, the next tick fires normally and the
+  display is already roughly correct.
+
+- **iPhone (Safari/PWA):** locking the screen or switching apps can fully **suspend or
+  discard the page** from memory. There is no "next tick" to fire — the JS execution
+  context itself is gone. When you come back, you're often looking at a page that was
+  silently reloaded from `localStorage` (via Zustand's `persist`), and no tick has run
+  since `sessionStart` was last written. The display shows whatever was last rendered
+  before suspension, frozen, until *something* triggers a recalculation.
+
+### The fix
+Add a `document.visibilitychange` listener. When the page becomes visible again, manually
+re-run the same wall-clock-based tick functions that already exist:
+
+```ts
+useEffect(() => {
+  const handleVisibilityChange = () => {
+    if (document.visibilityState !== "visible") return;
+    if (timer.phase === "running") {
+      tickTimerRef.current();
+    } else if (timer.phase === "break" && timer.breakType === "timed") {
+      tickBreakRef.current();
+    }
+  };
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+}, [timer.phase, timer.breakType]);
+```
+
+No new time-tracking logic was needed — `tickTimer`/`tickBreak` already derive the correct
+elapsed time from `sessionStart`/`breakStart`. The fix is purely about *forcing a
+recalculation* at the moment it's needed (page becomes visible), instead of waiting for an
+interval tick that mobile Safari may never deliver.
+
+### The one gap that's left: flow (open) sessions
+Timed sessions and breaks store a start timestamp and derive elapsed time. **Flow sessions
+don't** — `tickOpenSession` just increments a counter:
+
+```ts
+tickOpenSession: () => {
+  set((s) => ({ timer: { ...s.timer, secsElapsed: s.timer.secsElapsed + 1 } }));
+}
+```
+
+If the page is suspended during a flow session, `secsElapsed` simply doesn't advance while
+backgrounded — there's no timestamp to diff against, so the visibility listener can't catch
+it up. The flow session would *undercount* time spent locked. Fixing this properly would
+mean switching flow sessions to the same `Date.now() - sessionStart` pattern as timed
+sessions — not done yet, flagged as follow-up.
+
+### What I learned
+- **Wall-clock-based time tracking (Challenge 3) is necessary but not sufficient.** The
+  calculation being correct doesn't help if nothing calls it. You also need a trigger that
+  fires when the app resumes from a suspended state.
+- **`visibilitychange` is the right signal for "the user came back."** It fires reliably
+  across both desktop and mobile, including after a full page reload caused by mobile
+  memory reclamation — `localStorage`-persisted state is already there, the listener just
+  needs to re-derive the display from it.
+- **"Works on Mac" can mean the bug never had a chance to manifest**, not that the code is
+  correct. Desktop background tabs are forgiving enough to mask issues that mobile's
+  aggressive page suspension exposes immediately.
+- **Any per-tick counter (`secsElapsed += 1`) is a red flag** for code that needs to survive
+  being paused. The moment ticks can be skipped — by throttling, suspension, or a dropped
+  frame — a counter-based value silently falls behind. A timestamp diff never falls behind.
+
+### How to explain in an interview
+*"Users reported the focus timer looked frozen after locking their phone, even though the
+same background-tab scenario on Mac was fine. The underlying time math was already correct
+— I'd built it to derive elapsed time as `Date.now() - sessionStart` specifically so it
+couldn't drift. The real issue was that mobile Safari can fully suspend or reload a
+backgrounded page, so there was no `setInterval` tick left to trigger that recalculation
+when the user came back — the UI just showed a stale frozen value.*
+
+*The fix was a `visibilitychange` listener that re-runs the existing tick function the
+moment the page becomes visible again. No new time-tracking logic — just making sure the
+correct calculation actually runs at the right moment. It also surfaced a related gap: flow
+sessions use a simple incrementing counter instead of a timestamp diff, so they'll still
+undercount time during a suspension — a good example of why timestamp-based tracking should
+be the default for anything that needs to survive being paused."*
