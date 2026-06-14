@@ -17,6 +17,8 @@ export default function AppPage() {
     isPro,
     isSyncing,
     soundEnabled,
+    showElapsedTime,
+    setShowElapsedTime,
     setActiveCat,
     setTimerDuration,
     startTimer,
@@ -415,7 +417,7 @@ export default function AppPage() {
               color={activeCat?.color ?? "#4f46e5"}
             >
               <span className="text-5xl font-medium tabular-nums tracking-tight text-gray-900 dark:text-white">
-                {formatTime(timer.secsLeft)}
+                {formatTime(showElapsedTime ? timer.totalSecs - timer.secsLeft : timer.secsLeft)}
               </span>
               <span className="text-sm text-gray-400 dark:text-gray-400 mt-1 tabular-nums">
                 / {formatDuration(timer.durationMins)}
@@ -436,6 +438,16 @@ export default function AppPage() {
               )}
             </CircularProgress>
           </div>
+        )}
+
+        {/* Elapsed/remaining toggle — countdown mode only */}
+        {(timer.phase === "running" || timer.phase === "paused") && (
+          <button
+            onClick={() => setShowElapsedTime(!showElapsedTime)}
+            className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors -mt-3 mx-auto"
+          >
+            {showElapsedTime ? "Show remaining time" : "Show elapsed time"}
+          </button>
         )}
 
         {/* Circular timer — flow session count-up mode */}
