@@ -68,6 +68,8 @@ interface AppState {
   theme: "light" | "dark" | "system";
   soundEnabled: boolean;
   setSoundEnabled: (val: boolean) => void;
+  showElapsedTime: boolean;
+  setShowElapsedTime: (val: boolean) => void;
 
   // Auth (NOT persisted to localStorage)
   user: AuthUser | null;
@@ -154,6 +156,8 @@ export const useStore = create<AppState>()(
       theme: "system",
       soundEnabled: true,
       setSoundEnabled: (val) => set({ soundEnabled: val }),
+      showElapsedTime: false,
+      setShowElapsedTime: (val) => set({ showElapsedTime: val }),
       categories: defaultCategories,
       sessions: [],
       timer: defaultTimer,
@@ -596,6 +600,7 @@ export const useStore = create<AppState>()(
         isPro: s.isPro,
         theme: s.theme,
         soundEnabled: s.soundEnabled,
+        showElapsedTime: s.showElapsedTime,
         timer: s.timer,
       }),
     }

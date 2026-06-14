@@ -5,6 +5,10 @@ const activeOscillators: OscillatorNode[] = [];
 function getCtx(): AudioContext | null {
   try {
     if (!ctx) ctx = new AudioContext();
+    // Browsers create (or suspend) AudioContext until a user gesture resumes
+    // it. Timer completion fires from a setInterval callback, not a gesture,
+    // so without this the context can stay suspended and play nothing.
+    if (ctx.state === "suspended") ctx.resume();
     return ctx;
   } catch {
     // AudioContext unavailable (e.g. iOS Safari restrictions before any
