@@ -23,16 +23,18 @@ import {
 } from "recharts";
 import Link from "next/link";
 
-type Period = "today" | "week" | "month";
+type Period = "today" | "yesterday" | "week" | "month";
 
 const PERIOD_LABELS: Record<Period, string> = {
   today: "Today",
+  yesterday: "Yesterday",
   week: "Last 7 days",
   month: "Last 30 days",
 };
 
 const BAR_DAYS: Record<Period, number> = {
   today: 1,
+  yesterday: 1,
   week: 7,
   month: 30,
 };
@@ -97,7 +99,7 @@ export default function StatsPage() {
       {/* Period toggle — only shown for signed-in users */}
       {user && (
         <div className="flex gap-1 bg-gray-100 dark:bg-gray-800/60 p-1 rounded-xl">
-          {(["today", "week", "month"] as Period[]).map((p) => (
+          {(["today", "yesterday", "week", "month"] as Period[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
@@ -290,7 +292,7 @@ export default function StatsPage() {
           )}
 
           {/* Bar chart — daily trend */}
-          {period !== "today" && (
+          {period !== "today" && period !== "yesterday" && (
             <div className="card p-4">
               <p className="label-sm mb-4">Daily focus time</p>
               <div style={{ height: 160 }}>

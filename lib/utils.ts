@@ -19,7 +19,7 @@ export function startOfDay(date: Date): Date {
   return d;
 }
 
-export function getDateRange(period: "today" | "week" | "month"): {
+export function getDateRange(period: "today" | "yesterday" | "week" | "month"): {
   start: Date;
   end: Date;
 } {
@@ -29,6 +29,13 @@ export function getDateRange(period: "today" | "week" | "month"): {
 
   if (period === "today") {
     const start = startOfDay(now);
+    return { start, end };
+  } else if (period === "yesterday") {
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const start = startOfDay(yesterday);
+    const end = new Date(yesterday);
+    end.setHours(23, 59, 59, 999);
     return { start, end };
   } else if (period === "week") {
     const start = new Date(now);
@@ -45,7 +52,7 @@ export function getDateRange(period: "today" | "week" | "month"): {
 
 export function filterSessionsByPeriod(
   sessions: Session[],
-  period: "today" | "week" | "month",
+  period: "today" | "yesterday" | "week" | "month",
   isPro: boolean
 ): Session[] {
   const { start, end } = getDateRange(period);
@@ -119,7 +126,7 @@ export function aggregateByDay(
 
 export function getPreviousPeriodSessions(
   sessions: Session[],
-  period: "today" | "week" | "month"
+  period: "today" | "yesterday" | "week" | "month"
 ): Session[] {
   const { start, end } = getDateRange(period);
   const duration = end.getTime() - start.getTime();
