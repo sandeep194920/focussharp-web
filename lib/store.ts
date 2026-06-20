@@ -49,6 +49,7 @@ export interface TimerState {
   sessionStart: number | null;
   pausedAt: number | null;
   secsElapsed: number; // for open sessions: total elapsed excluding pauses
+  openSessionBase: number; // elapsed accumulated before the current running segment
   breakSecsLeft: number;
   breakDurationSecs: number;
   breakStart: number | null;
@@ -135,6 +136,7 @@ const defaultTimer: TimerState = {
   sessionStart: null,
   pausedAt: null,
   secsElapsed: 0,
+  openSessionBase: 0,
   breakSecsLeft: 0,
   breakDurationSecs: 0,
   breakStart: null,
@@ -348,6 +350,7 @@ export const useStore = create<AppState>()(
             phase: "open-running",
             sessionStart: Date.now(),
             secsElapsed: 0,
+            openSessionBase: 0,
             pausedAt: null,
           },
         }));
@@ -361,6 +364,8 @@ export const useStore = create<AppState>()(
             phase: "open-paused",
             pausedAt: Date.now(),
             sessionStart: null,
+            // secsElapsed already reflects the latest tick; lock it in as the new base
+            openSessionBase: s.timer.secsElapsed,
           },
         })),
 
@@ -371,13 +376,16 @@ export const useStore = create<AppState>()(
             phase: "open-running",
             sessionStart: Date.now(),
             pausedAt: null,
+            // openSessionBase holds elapsed before this segment; sessionStart is the segment anchor
           },
         })),
 
       tickOpenSession: () => {
         const { timer } = get();
-        if (timer.phase !== "open-running") return;
-        set((s) => ({ timer: { ...s.timer, secsElapsed: s.timer.secsElapsed + 1 } }));
+        if (timer.phase !== "open-running" || !timer.sessionStart) return;
+        // Mirror tickTimer: absolute value from a fixed anchor, never accumulates drift.
+        const segmentSecs = Math.floor((Date.now() - timer.sessionStart) / 1000);
+        set((s) => ({ timer: { ...s.timer, secsElapsed: s.timer.openSessionBase + segmentSecs } }));
       },
 
       endOpenSession: () => {
@@ -401,6 +409,7 @@ export const useStore = create<AppState>()(
             ...s.timer,
             phase: "break",
             secsElapsed: 0,
+            openSessionBase: 0,
             sessionStart: null,
             pausedAt: null,
             breakSecsLeft: 0,
@@ -445,6 +454,7 @@ export const useStore = create<AppState>()(
             sessionStart: null,
             pausedAt: null,
             secsElapsed: 0,
+            openSessionBase: 0,
           },
         })),
 
@@ -463,6 +473,7 @@ export const useStore = create<AppState>()(
             sessionStart: null,
             pausedAt: null,
             secsElapsed: 0,
+            openSessionBase: 0,
           },
         }));
         track('break_skipped');
