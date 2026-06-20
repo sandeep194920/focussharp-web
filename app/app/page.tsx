@@ -431,6 +431,13 @@ export default function AppPage() {
                   {activeCat.name}
                 </span>
               )}
+              {timer.sessionStart && (
+                <span className="text-xs mt-1.5 tabular-nums" style={{ color: activeCat?.color ?? "#4f46e5" }}>
+                  {new Date(timer.sessionStart).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {" → "}
+                  {new Date(timer.sessionStart + timer.totalSecs * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
               {timer.phase === "paused" && (
                 <span className="text-xs text-amber-500 font-medium mt-1">
                   Paused
@@ -475,6 +482,9 @@ export default function AppPage() {
                   {activeCat.name}
                 </span>
               )}
+              <span className="text-xs mt-1.5 tabular-nums" style={{ color: activeCat?.color ?? "#4f46e5" }}>
+                Started {new Date(Date.now() - timer.secsElapsed * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
               {timer.phase === "open-paused" && (
                 <span className="text-xs text-amber-500 font-medium mt-1">
                   Paused
