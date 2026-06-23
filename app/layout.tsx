@@ -12,20 +12,24 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "FocusSharp — Focus Timer & Time Tracking App",
+    default: "FocusSharp — Free Focus Timer, Flow Timer & Deep Work Tracker",
     template: "%s | FocusSharp",
   },
   description:
-    "FocusSharp is a minimal, powerful focus timer and time tracking app. Track deep work, study sessions, and flow states by category. No signup required.",
+    "Free focus timer and flow timer app. Use Pomodoro mode or open-ended flow sessions to track deep work and study time by category. No signup required.",
   keywords: [
     "focus timer",
+    "focus flow timer",
+    "flow timer",
     "pomodoro timer",
     "study timer app",
     "deep work timer",
-    "flow timer",
+    "flowtime timer",
     "time tracking by category",
     "focus app for students",
     "pomodoro app no signup",
+    "deep work tracker",
+    "focus session tracker",
   ],
   authors: [{ name: "Sandeep Amarnath", url: "https://staarsolutions.ca" }],
   creator: "Sandeep Amarnath",
@@ -67,7 +71,12 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/icon.svg",
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+    apple: "/icon.svg",
+    shortcut: "/favicon.ico",
   },
   manifest: "/site.webmanifest",
 };
