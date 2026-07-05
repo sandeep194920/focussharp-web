@@ -5,7 +5,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import UserMenu from "@/components/ui/UserMenu";
-import AuthModal from "@/components/ui/AuthModal";
 import { useStore } from "@/lib/store";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { stopAllSounds } from "@/lib/sounds";
@@ -193,7 +192,6 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
           })}
         </div>
       </nav>
-      <AuthModal />
       <Suspense fallback={null}><AuthParamHandler /></Suspense>
     </div>
   );
