@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { PHProvider } from "@/components/providers/PostHogProvider";
+import AuthModal from "@/components/ui/AuthModal";
 import "./globals.css";
 
 const inter = Inter({
@@ -117,6 +118,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <PHProvider>
           {children}
+          <AuthModal />
           <Analytics />
         </PHProvider>
       </body>
