@@ -6,7 +6,7 @@ import { useStore } from "@/lib/store";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 export default function AuthModal() {
-  const { authModal, closeAuthModal, openAuthModal, setUser, syncOnLogin } = useStore();
+  const { authModal, closeAuthModal, openAuthModal, setUser, syncOnLogin, pendingCheckoutPlan, setPendingCheckoutPlan } = useStore();
   const isOpen = authModal !== "closed";
   const mode = authModal === "sign-up" ? "sign-up" : "sign-in";
   const router = useRouter();
@@ -24,6 +24,28 @@ export default function AuthModal() {
     setSuccess(null);
     setEmail("");
     setPassword("");
+  };
+
+  const afterAuth = async () => {
+    if (pendingCheckoutPlan) {
+      const plan = pendingCheckoutPlan;
+      setPendingCheckoutPlan(null);
+      try {
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+      } catch {
+        // fall through to /app if checkout kickoff fails
+      }
+    }
+    router.push("/app");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,7 +76,7 @@ export default function AuthModal() {
           syncOnLogin();
           closeAuthModal();
           reset();
-          router.push("/app");
+          afterAuth();
         } else {
           setSuccess("Check your email to confirm your account.");
         }
@@ -71,7 +93,7 @@ export default function AuthModal() {
           syncOnLogin();
           closeAuthModal();
           reset();
-          router.push("/app");
+          afterAuth();
         }
       }
     } catch (err: unknown) {
@@ -83,17 +105,18 @@ export default function AuthModal() {
 
   const handleGoogle = async () => {
     if (!supabase) return;
+    const next = pendingCheckoutPlan ? `/app?checkout=${pendingCheckoutPlan}` : "/app";
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       // Already signed in with email/password — link Google to the same account
       await supabase.auth.linkIdentity({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/api/auth/callback?next=/app` },
+        options: { redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}` },
       });
     } else {
       await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/api/auth/callback?next=/app` },
+        options: { redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}` },
       });
     }
   };

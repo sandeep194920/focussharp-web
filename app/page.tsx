@@ -4,6 +4,7 @@ import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import HeroTimer from "@/components/landing/HeroTimer";
 import EmailCapture from "@/components/ui/EmailCapture";
+import CheckoutButton from "@/components/ui/CheckoutButton";
 
 export const metadata: Metadata = {
   title: "FocusSharp — Free Focus Timer, Flow Timer & Pomodoro App",
@@ -369,7 +370,7 @@ export default function LandingPage() {
                   price: "$0",
                   features: ["Try timer instantly", "Free account to save sessions", "3 categories", "7-day history"],
                   cta: "Get started",
-                  href: "/app",
+                  plan: "free" as const,
                   highlight: false,
                 },
                 {
@@ -379,7 +380,7 @@ export default function LandingPage() {
                   annual: "or $19.99/year",
                   features: ["Unlimited categories", "Full history", "Cloud sync", "Native apps (coming soon)"],
                   cta: "Get Pro",
-                  href: "/pricing",
+                  plan: "monthly" as const,
                   highlight: true,
                 },
                 {
@@ -389,7 +390,7 @@ export default function LandingPage() {
                   badge: "Early Bird",
                   features: ["Everything in Pro", "All future platforms", "Pay once, own forever"],
                   cta: "Get lifetime access",
-                  href: "/pricing",
+                  plan: "lifetime" as const,
                   highlight: false,
                 },
               ].map((plan) => (
@@ -435,12 +436,12 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link
-                    href={plan.href}
+                  <CheckoutButton
+                    plan={plan.plan}
                     className={plan.highlight ? "btn-primary w-full text-sm text-center block" : "btn-secondary w-full text-sm text-center block"}
                   >
                     {plan.cta}
-                  </Link>
+                  </CheckoutButton>
                 </div>
               ))}
             </div>

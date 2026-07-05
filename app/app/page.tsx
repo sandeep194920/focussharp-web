@@ -15,6 +15,7 @@ export default function AppPage() {
     categories,
     timer,
     isPro,
+    user,
     isSyncing,
     soundEnabled,
     showElapsedTime,
@@ -283,6 +284,17 @@ export default function AppPage() {
               Your break ended! Time to focus again.
             </p>
           </motion.div>
+        )}
+        {user && !isPro && (
+          <Link
+            href="/pricing"
+            className="card px-4 py-3 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900 flex items-center justify-between group"
+          >
+            <p className="text-sm text-indigo-700 dark:text-indigo-300">
+              <span className="font-medium">Upgrade to Pro</span> for unlimited categories &amp; full stats
+            </p>
+            <span className="text-indigo-500 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform">→</span>
+          </Link>
         )}
         {/* Category picker */}
         <div className="card p-4">

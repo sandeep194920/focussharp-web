@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import UserMenu from "@/components/ui/UserMenu";
@@ -63,14 +63,32 @@ function SoundToggle() {
   );
 }
 
+const CHECKOUT_PLANS = ["monthly", "annual", "lifetime"] as const;
+
 function AuthParamHandler() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { openAuthModal, user } = useStore();
+
   useEffect(() => {
     if (!user && searchParams.get("auth") === "signup") {
       openAuthModal("sign-up");
     }
   }, [searchParams, openAuthModal, user]);
+
+  useEffect(() => {
+    const plan = searchParams.get("checkout");
+    if (!user || !plan || !CHECKOUT_PLANS.includes(plan as (typeof CHECKOUT_PLANS)[number])) return;
+    router.replace("/app");
+    fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan }),
+    })
+      .then((res) => res.json())
+      .then((data) => { if (data.url) window.location.href = data.url; });
+  }, [searchParams, user, router]);
+
   return null;
 }
 
