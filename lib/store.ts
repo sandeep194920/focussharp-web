@@ -76,6 +76,7 @@ interface AppState {
   user: AuthUser | null;
   isSyncing: boolean;
   authModal: "closed" | "sign-in" | "sign-up";
+  pendingCheckoutPlan: "monthly" | "annual" | "lifetime" | null;
 
   // Categories
   categories: Category[];
@@ -118,6 +119,7 @@ interface AppState {
   setIsPro: (val: boolean) => void;
   openAuthModal: (mode: "sign-in" | "sign-up") => void;
   closeAuthModal: () => void;
+  setPendingCheckoutPlan: (plan: "monthly" | "annual" | "lifetime" | null) => void;
   signOut: () => Promise<void>;
   syncOnLogin: () => Promise<void>;
 
@@ -168,6 +170,7 @@ export const useStore = create<AppState>()(
       user: null,
       isSyncing: true,
       authModal: "closed",
+      pendingCheckoutPlan: null,
 
       addCategory: (name, color) => {
         const { categories, isPro, user, _pushCategory } = get();
@@ -532,6 +535,7 @@ export const useStore = create<AppState>()(
       setIsPro: (val) => set({ isPro: val }),
 
       openAuthModal: (mode) => set({ authModal: mode }),
+      setPendingCheckoutPlan: (plan) => set({ pendingCheckoutPlan: plan }),
 
       closeAuthModal: () => set({ authModal: "closed" }),
 

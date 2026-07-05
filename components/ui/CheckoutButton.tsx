@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function CheckoutButton({ plan, className, children }: Props) {
-  const { user, openAuthModal } = useStore();
+  const { user, openAuthModal, setPendingCheckoutPlan } = useStore();
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
@@ -20,6 +20,7 @@ export default function CheckoutButton({ plan, className, children }: Props) {
     }
 
     if (!user) {
+      setPendingCheckoutPlan(plan);
       openAuthModal("sign-up");
       return;
     }
